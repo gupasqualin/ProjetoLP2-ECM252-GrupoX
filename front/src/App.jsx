@@ -76,7 +76,7 @@ function App() {
       const response = await axios.get(`${API_BASE_URL}/empresas`);
       setCompanies(response.data);
     } catch {
-      setCompanyError('Não foi possível carregar as empresas.Microsserviço pode não estar ativo.');
+      setCompanyError('Não foi possível carregar as empresas. Verifique se o microsserviço está ativo.');
     }
   };
 
