@@ -1,10 +1,12 @@
 # Microsserviço 1 - Gestão de Empresas
 
-Catálogo central de empresas para análise no DecisionDCF.
+Empresas que serao cadastradas na plataforma, pelo proprio usuário, para realização da análise.
 
 ## Função
 
-- Registrar empresa (`name`, `ticker`, `sector`)
+- Registrar empresa (`name`, `ticker`, `sector`) 
+TICKER = CÓDIGO AÇÃO EMPRESA, EXEMPLO: 
+APPLE - AAPL34
 - Listar empresas cadastradas
 
 ## Como executar
@@ -20,9 +22,6 @@ npm install
 ```bash
 npm run dev
 ```
-
-Servidor padrão: `http://localhost:3001`
-
 ## Endpoints
 
 - `GET /health` - status do microsserviço

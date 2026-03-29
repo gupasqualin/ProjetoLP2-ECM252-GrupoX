@@ -4,6 +4,7 @@ import './App.css';
 
 function App() {
   const API_BASE_URL = '/api';
+  const MARKET_DATA_API_BASE_URL = '/api-market-data';
 
   const [assumptions, setAssumptions] = useState({
     taxRate: 25,
@@ -31,6 +32,16 @@ function App() {
   const [companyLoading, setCompanyLoading] = useState(false);
   const [companyError, setCompanyError] = useState('');
   const [companySuccess, setCompanySuccess] = useState('');
+  const [marketDataList, setMarketDataList] = useState([]);
+  const [marketDataForm, setMarketDataForm] = useState({
+    companyId: '',
+    cash: '',
+    netDebt: '',
+    sharesOutstanding: ''
+  });
+  const [marketDataLoading, setMarketDataLoading] = useState(false);
+  const [marketDataError, setMarketDataError] = useState('');
+  const [marketDataSuccess, setMarketDataSuccess] = useState('');
 
   // Cálculo simples testes
   const summary = useMemo(() => {
@@ -65,13 +76,33 @@ function App() {
       const response = await axios.get(`${API_BASE_URL}/empresas`);
       setCompanies(response.data);
     } catch {
-      setCompanyError('Não foi possível carregar as empresas. Verifique se o microsserviço está ativo.');
+      setCompanyError('Não foi possível carregar as empresas.Microsserviço pode não estar ativo.');
+    }
+  };
+
+  const loadMarketData = async () => {
+    try {
+      const response = await axios.get(`${MARKET_DATA_API_BASE_URL}/market-data`);
+      const sorted = [...response.data].sort((a, b) => a.companyId - b.companyId);
+      setMarketDataList(sorted);
+    } catch {
+      setMarketDataError('Não foi possível carregar o Market Data. Verifique se o microsserviço está ativo.');
     }
   };
 
   useEffect(() => {
     loadCompanies();
+    loadMarketData();
   }, []);
+
+  useEffect(() => {
+    if (companies.length > 0 && !marketDataForm.companyId) {
+      setMarketDataForm((prev) => ({
+        ...prev,
+        companyId: String(companies[0].id)
+      }));
+    }
+  }, [companies, marketDataForm.companyId]);
 
   const handleCompanyChange = (event) => {
     const { name, value } = event.target;
@@ -116,6 +147,83 @@ function App() {
       const message = error?.response?.data?.message || 'Erro ao remover empresa.';
       setCompanyError(message);
     }
+  };
+
+  const handleMarketDataChange = (event) => {
+    const { name, value } = event.target;
+    setMarketDataForm((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const resetMarketDataForm = () => {
+    setMarketDataForm({
+      companyId: companies.length > 0 ? String(companies[0].id) : '',
+      cash: '',
+      netDebt: '',
+      sharesOutstanding: ''
+    });
+  };
+
+  const handleMarketDataSubmit = async (event) => {
+    event.preventDefault();
+
+    const companyId = Number(marketDataForm.companyId);
+    const payload = {
+      companyId,
+      cash: Number(marketDataForm.cash),
+      netDebt: Number(marketDataForm.netDebt),
+      sharesOutstanding: Number(marketDataForm.sharesOutstanding)
+    };
+
+    if (!companyId) {
+      setMarketDataError('Selecione uma empresa para salvar o Market Data.');
+      return;
+    }
+
+    setMarketDataLoading(true);
+    setMarketDataError('');
+    setMarketDataSuccess('');
+
+    try {
+      const response = await axios.post(`${MARKET_DATA_API_BASE_URL}/market-data`, payload);
+
+      setMarketDataList((prev) => {
+        const withoutCurrent = prev.filter((entry) => entry.companyId !== response.data.companyId);
+        return [...withoutCurrent, response.data].sort((a, b) => a.companyId - b.companyId);
+      });
+
+      setMarketDataSuccess('Dados de mercado cadastrados com sucesso.');
+      resetMarketDataForm();
+    } catch (error) {
+      const message = error?.response?.data?.message || 'Erro ao salvar dados de mercado.';
+      setMarketDataError(message);
+    } finally {
+      setMarketDataLoading(false);
+    }
+  };
+
+  const handleMarketDataDelete = async (companyId) => {
+    setMarketDataError('');
+    setMarketDataSuccess('');
+
+    try {
+      await axios.delete(`${MARKET_DATA_API_BASE_URL}/market-data/${companyId}`);
+      setMarketDataList((prev) => prev.filter((entry) => entry.companyId !== companyId));
+      setMarketDataSuccess('Dados de mercado removidos com sucesso.');
+    } catch (error) {
+      const message = error?.response?.data?.message || 'Erro ao remover dados de mercado.';
+      setMarketDataError(message);
+    }
+  };
+
+  const findCompanyLabel = (companyId) => {
+    const company = companies.find((item) => item.id === companyId);
+    if (!company) {
+      return `Empresa #${companyId}`;
+    }
+    return `${company.name} (${company.ticker})`;
   };
 
   const maxCash = Math.max(...cashFlow);
@@ -369,7 +477,7 @@ function App() {
                 <th>Nome</th>
                 <th>Ticker</th>
                 <th>Setor</th>
-                <th className="action-cell">Ação</th>
+                <th className="action-cell"></th>
               </tr>
             </thead>
             <tbody>
@@ -391,6 +499,112 @@ function App() {
                         onClick={() => handleCompanyDelete(company.id)}
                         title="Remover empresa"
                         aria-label={`Remover ${company.name}`}
+                      >
+                        ×
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </article>
+
+        <article className="panel company-panel">
+          <h2>Market Data</h2>
+
+          <form className="market-form" onSubmit={handleMarketDataSubmit}>
+            <select
+              name="companyId"
+              value={marketDataForm.companyId}
+              onChange={handleMarketDataChange}
+              required
+            >
+              {companies.length === 0 ? (
+                <option value="">Cadastre uma empresa primeiro</option>
+              ) : (
+                companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name} ({company.ticker})
+                  </option>
+                ))
+              )}
+            </select>
+
+            <input
+              name="cash"
+              type="number"
+              min="0"
+              step="any"
+              placeholder="Caixa"
+              value={marketDataForm.cash}
+              onChange={handleMarketDataChange}
+              required
+            />
+
+            <input
+              name="netDebt"
+              type="number"
+              min="0"
+              step="any"
+              placeholder="Dívida líquida"
+              value={marketDataForm.netDebt}
+              onChange={handleMarketDataChange}
+              required
+            />
+
+            <input
+              name="sharesOutstanding"
+              type="number"
+              min="0"
+              step="1"
+              placeholder="Ações emitidas"
+              value={marketDataForm.sharesOutstanding}
+              onChange={handleMarketDataChange}
+              required
+            />
+
+            <div className="inline-actions">
+              <button type="submit" disabled={marketDataLoading || companies.length === 0}>
+                {marketDataLoading ? 'Salvando...' : 'Cadastrar dados'}
+              </button>
+            </div>
+          </form>
+
+          {marketDataError && <p className="feedback error">{marketDataError}</p>}
+          {marketDataSuccess && <p className="feedback success">{marketDataSuccess}</p>}
+
+          <table>
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th>Caixa</th>
+                <th>Dívida Líquida</th>
+                <th>Ações Emitidas</th>
+                <th>Atualizado em</th>
+                <th className="action-cell"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {marketDataList.length === 0 ? (
+                <tr>
+                  <td colSpan="6">Sem dados de mercado cadastrados.</td>
+                </tr>
+              ) : (
+                marketDataList.map((entry) => (
+                  <tr key={entry.companyId}>
+                    <td>{findCompanyLabel(entry.companyId)}</td>
+                    <td>{formatNumber(entry.cash)}</td>
+                    <td>{formatNumber(entry.netDebt)}</td>
+                    <td>{formatNumber(entry.sharesOutstanding)}</td>
+                    <td>{new Date(entry.updatedAt).toLocaleString('pt-BR')}</td>
+                    <td className="action-cell">
+                      <button
+                        type="button"
+                        className="delete-company-btn"
+                        onClick={() => handleMarketDataDelete(entry.companyId)}
+                        title="Remover dados de mercado"
+                        aria-label={`Remover dados de ${findCompanyLabel(entry.companyId)}`}
                       >
                         ×
                       </button>

@@ -7,7 +7,6 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Armazenamento simples em memória (ideal para a primeira versão do microsserviço).
 let companies = [
   { id: 1, name: 'WEG S.A.', ticker: 'WEGE3', sector: 'Bens Industriais' },
   { id: 2, name: 'Petrobras', ticker: 'PETR4', sector: 'Energia' }

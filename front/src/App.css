@@ -229,6 +229,8 @@ th {
 
 .company-section {
   padding: 0 14px 14px;
+  display: grid;
+  gap: 12px;
 }
 
 .company-panel h2 {
@@ -242,7 +244,21 @@ th {
   margin-bottom: 10px;
 }
 
+.market-form {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
 .company-form input {
+  padding: 8px;
+  border: 1px solid #cfd4da;
+  background: #f8fafc;
+}
+
+.market-form input,
+.market-form select {
   padding: 8px;
   border: 1px solid #cfd4da;
   background: #f8fafc;
@@ -257,6 +273,29 @@ th {
 }
 
 .company-form button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.inline-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.inline-actions button {
+  border: 1px solid #1f4f8a;
+  background: #1f4f8a;
+  color: #fff;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.inline-actions .secondary-btn {
+  background: #f2f5f9;
+  color: #1f4f8a;
+}
+
+.inline-actions button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
@@ -313,5 +352,13 @@ th {
 
   .company-form {
     grid-template-columns: 1fr;
+  }
+
+  .market-form {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-actions {
+    flex-direction: column;
   }
 }
