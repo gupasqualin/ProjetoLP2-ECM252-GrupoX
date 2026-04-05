@@ -7,21 +7,21 @@ function App() {
   const MARKET_DATA_API_BASE_URL = '/api-market-data';
 
   const [assumptions, setAssumptions] = useState({
-    taxRate: 25,
-    discountRate: 12,
-    perpetualGrowthRate: 3,
-    evEbitdaMultiple: 7,
-    transactionDate: '12/31/17',
-    fiscalYearEnd: '6/30/18',
-    currentPrice: 25,
-    sharesOutstanding: 20000,
-    debt: 30000,
-    cash: 239550,
-    capex: 15000
+    taxRate: '',
+    discountRate: '',
+    perpetualGrowthRate: '',
+    evEbitdaMultiple: '',
+    transactionDate: '',
+    fiscalYearEnd: '',
+    currentPrice: '',
+    sharesOutstanding: '',
+    debt: '',
+    cash: '',
+    capex: ''
   });
 
-  const cashFlow = [17747, 37715, 41501, 43510, 47008];
-  const years = ['Ano 1', 'Ano 2', 'Ano 3', 'Ano 4', 'Ano 5'];
+  const cashFlow = [];
+  const years = [];
 
   const [companies, setCompanies] = useState([]);
   const [companyForm, setCompanyForm] = useState({
@@ -35,9 +35,20 @@ function App() {
   const [marketDataList, setMarketDataList] = useState([]);
   const [marketDataForm, setMarketDataForm] = useState({
     companyId: '',
+    currentStockPrice: '',
+    sharesOutstanding: '',
+    beta: '',
+    totalDebt: '',
+    costOfDebt: '',
+    effectiveTaxRate: '',
     cash: '',
     netDebt: '',
-    sharesOutstanding: ''
+    revenue: '',
+    ebitda: '',
+    ebit: '',
+    capex: '',
+    depreciation: '',
+    workingCapital: ''
   });
   const [marketDataLoading, setMarketDataLoading] = useState(false);
   const [marketDataError, setMarketDataError] = useState('');
@@ -45,13 +56,17 @@ function App() {
 
   // Cálculo simples testes
   const summary = useMemo(() => {
-    const exitValue = 542129;
-    const equityValue = exitValue - assumptions.debt + assumptions.cash;
-    const intrinsicPerShare = (
-      equityValue / assumptions.sharesOutstanding
-    ).toFixed(2);
+    const exitValue = 0;
+    const debt = Number(assumptions.debt) || 0;
+    const cash = Number(assumptions.cash) || 0;
+    const sharesOutstanding = Number(assumptions.sharesOutstanding);
+    const currentPrice = Number(assumptions.currentPrice) || 0;
+    const equityValue = exitValue - debt + cash;
+    const intrinsicPerShare = sharesOutstanding > 0
+      ? (equityValue / sharesOutstanding).toFixed(2)
+      : '0.00';
 
-    const marketPerShare = Number(assumptions.currentPrice).toFixed(2);
+    const marketPerShare = currentPrice.toFixed(2);
     const upside = (Number(intrinsicPerShare) - Number(marketPerShare)).toFixed(2);
 
     return {
@@ -65,9 +80,13 @@ function App() {
 
   const handleAssumptionChange = (event) => {
     const { name, value } = event.target;
+    const isDateField = name.includes('Date') || name.includes('End');
+
     setAssumptions((prev) => ({
       ...prev,
-      [name]: name.includes('Date') || name.includes('End') ? value : Number(value) || 0
+      [name]: isDateField
+        ? value
+        : (value === '' ? '' : Number(value))
     }));
   };
 
@@ -160,9 +179,20 @@ function App() {
   const resetMarketDataForm = () => {
     setMarketDataForm({
       companyId: companies.length > 0 ? String(companies[0].id) : '',
+      currentStockPrice: '',
+      sharesOutstanding: '',
+      beta: '',
+      totalDebt: '',
+      costOfDebt: '',
+      effectiveTaxRate: '',
       cash: '',
       netDebt: '',
-      sharesOutstanding: ''
+      revenue: '',
+      ebitda: '',
+      ebit: '',
+      capex: '',
+      depreciation: '',
+      workingCapital: ''
     });
   };
 
@@ -172,9 +202,20 @@ function App() {
     const companyId = Number(marketDataForm.companyId);
     const payload = {
       companyId,
+      currentStockPrice: Number(marketDataForm.currentStockPrice),
+      sharesOutstanding: Number(marketDataForm.sharesOutstanding),
+      beta: Number(marketDataForm.beta),
+      totalDebt: Number(marketDataForm.totalDebt),
+      costOfDebt: Number(marketDataForm.costOfDebt),
+      effectiveTaxRate: Number(marketDataForm.effectiveTaxRate),
       cash: Number(marketDataForm.cash),
       netDebt: Number(marketDataForm.netDebt),
-      sharesOutstanding: Number(marketDataForm.sharesOutstanding)
+      revenue: Number(marketDataForm.revenue),
+      ebitda: Number(marketDataForm.ebitda),
+      ebit: Number(marketDataForm.ebit),
+      capex: Number(marketDataForm.capex),
+      depreciation: Number(marketDataForm.depreciation),
+      workingCapital: Number(marketDataForm.workingCapital)
     };
 
     if (!companyId) {
@@ -226,16 +267,29 @@ function App() {
     return `${company.name} (${company.ticker})`;
   };
 
-  const maxCash = Math.max(...cashFlow);
+  const maxCash = cashFlow.length > 0 ? Math.max(...cashFlow) : 1;
   const intrinsicDown = Number(summary.intrinsicPerShare) < Number(summary.marketPerShare);
   const marketDown = Number(summary.marketPerShare) < Number(summary.intrinsicPerShare);
   const upsideDown = Number(summary.upside) < 0;
 
-  const formatNumber = (value) => Number(value).toLocaleString('pt-BR');
-  const formatMoney = (value) => Number(value).toLocaleString('pt-BR', {
+  const formatNumber = (value) => {
+    const parsedValue = Number(value);
+    if (!Number.isFinite(parsedValue)) {
+      return '-';
+    }
+    return parsedValue.toLocaleString('pt-BR');
+  };
+
+  const formatMoney = (value) => {
+    const parsedValue = Number(value);
+    if (!Number.isFinite(parsedValue)) {
+      return '-';
+    }
+    return parsedValue.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  });
+    });
+  };
 
   return (
     <main className="dcf-page">
@@ -349,22 +403,7 @@ function App() {
           </thead>
           <tbody>
             <tr>
-              <td>FCL não alavancado</td>
-              <td>35.494</td>
-              <td>37.715</td>
-              <td>41.501</td>
-              <td>43.510</td>
-              <td>47.008</td>
-              <td>-</td>
-            </tr>
-            <tr>
-              <td>FC da Transação</td>
-              <td>17.747</td>
-              <td>37.715</td>
-              <td>41.501</td>
-              <td>43.510</td>
-              <td>47.008</td>
-              <td>{formatNumber(summary.exitValue)}</td>
+              <td colSpan="7">Sem dados de fluxo de caixa carregados.</td>
             </tr>
           </tbody>
         </table>
@@ -511,60 +550,246 @@ function App() {
         </article>
 
         <article className="panel company-panel">
-          <h2>Market Data</h2>
+          <h2>Dados de Mercado</h2>
 
           <form className="market-form" onSubmit={handleMarketDataSubmit}>
-            <select
-              name="companyId"
-              value={marketDataForm.companyId}
-              onChange={handleMarketDataChange}
-              required
-            >
-              {companies.length === 0 ? (
-                <option value="">Cadastre uma empresa primeiro</option>
-              ) : (
-                companies.map((company) => (
-                  <option key={company.id} value={company.id}>
-                    {company.name} ({company.ticker})
-                  </option>
-                ))
-              )}
-            </select>
+            <div className="market-company-field">
+              <label htmlFor="companyId">Empresa</label>
+              <select
+                id="companyId"
+                name="companyId"
+                value={marketDataForm.companyId}
+                onChange={handleMarketDataChange}
+                required
+              >
+                {companies.length === 0 ? (
+                  <option value="">Cadastre uma empresa primeiro</option>
+                ) : (
+                  companies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name} ({company.ticker})
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
 
-            <input
-              name="cash"
-              type="number"
-              min="0"
-              step="any"
-              placeholder="Caixa"
-              value={marketDataForm.cash}
-              onChange={handleMarketDataChange}
-              required
-            />
+            <div className="market-fieldset-grid">
+              <fieldset className="market-fieldset">
+                <legend>Precificação & Risco</legend>
 
-            <input
-              name="netDebt"
-              type="number"
-              min="0"
-              step="any"
-              placeholder="Dívida líquida"
-              value={marketDataForm.netDebt}
-              onChange={handleMarketDataChange}
-              required
-            />
+                <div className="market-field">
+                  <label htmlFor="currentStockPrice">Preço atual da ação</label>
+                  <input
+                    id="currentStockPrice"
+                    name="currentStockPrice"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="Preço atual da ação (R$)"
+                    value={marketDataForm.currentStockPrice}
+                    onChange={handleMarketDataChange}
+                    required
+                  />
+                </div>
 
-            <input
-              name="sharesOutstanding"
-              type="number"
-              min="0"
-              step="1"
-              placeholder="Ações emitidas"
-              value={marketDataForm.sharesOutstanding}
-              onChange={handleMarketDataChange}
-              required
-            />
+                <div className="market-field">
+                  <label htmlFor="sharesOutstanding">Ações emitidas</label>
+                  <input
+                    id="sharesOutstanding"
+                    name="sharesOutstanding"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="Total de ações emitidas"
+                    value={marketDataForm.sharesOutstanding}
+                    onChange={handleMarketDataChange}
+                    required
+                  />
+                </div>
 
-            <div className="inline-actions">
+                <div className="market-field">
+                  <label htmlFor="beta">Beta</label>
+                  <input
+                    id="beta"
+                    name="beta"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="Beta da empresa"
+                    value={marketDataForm.beta}
+                    onChange={handleMarketDataChange}
+                    required
+                  />
+                </div>
+
+                <div className="market-field">
+                  <label htmlFor="totalDebt">Dívida bruta total</label>
+                  <input
+                    id="totalDebt"
+                    name="totalDebt"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="Dívida bruta total (R$)"
+                    value={marketDataForm.totalDebt}
+                    onChange={handleMarketDataChange}
+                    required
+                  />
+                </div>
+
+                <div className="market-field">
+                  <label htmlFor="costOfDebt">Custo da dívida</label>
+                  <input
+                    id="costOfDebt"
+                    name="costOfDebt"
+                    type="number"
+                    step="any"
+                    placeholder="Custo da dívida (0 a 1)"
+                    value={marketDataForm.costOfDebt}
+                    onChange={handleMarketDataChange}
+                    required
+                  />
+                </div>
+
+                <div className="market-field">
+                  <label htmlFor="effectiveTaxRate">Alíquota efetiva de IR</label>
+                  <input
+                    id="effectiveTaxRate"
+                    name="effectiveTaxRate"
+                    type="number"
+                    step="any"
+                    placeholder="Alíquota efetiva de IR (0 a 1)"
+                    value={marketDataForm.effectiveTaxRate}
+                    onChange={handleMarketDataChange}
+                    required
+                  />
+                </div>
+              </fieldset>
+
+              <fieldset className="market-fieldset">
+                <legend>Demonstrativo de Resultados</legend>
+
+                <div className="market-field">
+                  <label htmlFor="cash">Caixa e equivalentes</label>
+                  <input
+                    id="cash"
+                    name="cash"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="Caixa e equivalentes (R$)"
+                    value={marketDataForm.cash}
+                    onChange={handleMarketDataChange}
+                    required
+                  />
+                </div>
+
+                <div className="market-field">
+                  <label htmlFor="netDebt">Dívida líquida</label>
+                  <input
+                    id="netDebt"
+                    name="netDebt"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="Dívida líquida (R$)"
+                    value={marketDataForm.netDebt}
+                    onChange={handleMarketDataChange}
+                    required
+                  />
+                </div>
+
+                <div className="market-field">
+                  <label htmlFor="revenue">Receita líquida</label>
+                  <input
+                    id="revenue"
+                    name="revenue"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="Receita líquida (R$)"
+                    value={marketDataForm.revenue}
+                    onChange={handleMarketDataChange}
+                    required
+                  />
+                </div>
+
+                <div className="market-field">
+                  <label htmlFor="ebitda">EBITDA</label>
+                  <input
+                    id="ebitda"
+                    name="ebitda"
+                    type="number"
+                    step="any"
+                    placeholder="EBITDA (R$)"
+                    value={marketDataForm.ebitda}
+                    onChange={handleMarketDataChange}
+                    required
+                  />
+                </div>
+
+                <div className="market-field">
+                  <label htmlFor="ebit">EBIT</label>
+                  <input
+                    id="ebit"
+                    name="ebit"
+                    type="number"
+                    step="any"
+                    placeholder="EBIT (R$)"
+                    value={marketDataForm.ebit}
+                    onChange={handleMarketDataChange}
+                    required
+                  />
+                </div>
+
+                <div className="market-field">
+                  <label htmlFor="capex">Capex</label>
+                  <input
+                    id="capex"
+                    name="capex"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="Capex do exercício (R$)"
+                    value={marketDataForm.capex}
+                    onChange={handleMarketDataChange}
+                    required
+                  />
+                </div>
+
+                <div className="market-field">
+                  <label htmlFor="depreciation">Depreciação e amortização</label>
+                  <input
+                    id="depreciation"
+                    name="depreciation"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="Depreciação e amortização (R$)"
+                    value={marketDataForm.depreciation}
+                    onChange={handleMarketDataChange}
+                    required
+                  />
+                </div>
+
+                <div className="market-field">
+                  <label htmlFor="workingCapital">Capital de giro líquido</label>
+                  <input
+                    id="workingCapital"
+                    name="workingCapital"
+                    type="number"
+                    step="any"
+                    placeholder="Capital de giro líquido (R$)"
+                    value={marketDataForm.workingCapital}
+                    onChange={handleMarketDataChange}
+                    required
+                  />
+                </div>
+              </fieldset>
+            </div>
+
+            <div className="inline-actions market-actions">
               <button type="submit" disabled={marketDataLoading || companies.length === 0}>
                 {marketDataLoading ? 'Salvando...' : 'Cadastrar dados'}
               </button>
@@ -578,9 +803,11 @@ function App() {
             <thead>
               <tr>
                 <th>Empresa</th>
-                <th>Caixa</th>
+                <th>Receita</th>
+                <th>EBITDA</th>
                 <th>Dívida Líquida</th>
-                <th>Ações Emitidas</th>
+                <th>Beta</th>
+                <th>Preço Atual</th>
                 <th>Atualizado em</th>
                 <th className="action-cell"></th>
               </tr>
@@ -588,16 +815,18 @@ function App() {
             <tbody>
               {marketDataList.length === 0 ? (
                 <tr>
-                  <td colSpan="6">Sem dados de mercado cadastrados.</td>
+                  <td colSpan="8">Sem dados de mercado cadastrados.</td>
                 </tr>
               ) : (
                 marketDataList.map((entry) => (
                   <tr key={entry.companyId}>
                     <td>{findCompanyLabel(entry.companyId)}</td>
-                    <td>{formatNumber(entry.cash)}</td>
+                    <td>{formatNumber(entry.revenue)}</td>
+                    <td>{formatNumber(entry.ebitda)}</td>
                     <td>{formatNumber(entry.netDebt)}</td>
-                    <td>{formatNumber(entry.sharesOutstanding)}</td>
-                    <td>{new Date(entry.updatedAt).toLocaleString('pt-BR')}</td>
+                    <td>{Number(entry.beta).toFixed(2)}</td>
+                    <td>R$ {formatMoney(entry.currentStockPrice)}</td>
+                    <td>{entry.updatedAt ? new Date(entry.updatedAt).toLocaleString('pt-BR') : '-'}</td>
                     <td className="action-cell">
                       <button
                         type="button"

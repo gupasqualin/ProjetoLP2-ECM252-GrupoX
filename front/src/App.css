@@ -246,8 +246,7 @@ th {
 
 .market-form {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 10px;
 }
 
@@ -257,9 +256,63 @@ th {
   background: #f8fafc;
 }
 
-.market-form input,
-.market-form select {
-  padding: 8px;
+.market-company-field {
+  max-width: 420px;
+}
+
+.market-company-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #38404a;
+}
+
+.market-company-field select {
+  width: 100%;
+  padding: 6px;
+  box-sizing: border-box;
+  border: 1px solid #cfd4da;
+  background: #f8fafc;
+}
+
+.market-fieldset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.market-fieldset {
+  border: 1px solid #d7dce2;
+  border-radius: 0;
+  padding: 12px;
+  background: #fff;
+}
+
+.market-fieldset legend {
+  font-weight: 700;
+  color: #2f3540;
+  padding: 0 6px;
+}
+
+.market-field {
+  margin-bottom: 10px;
+}
+
+.market-field:last-child {
+  margin-bottom: 0;
+}
+
+.market-field label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #38404a;
+}
+
+.market-field input {
+  width: 100%;
+  padding: 6px;
+  box-sizing: border-box;
   border: 1px solid #cfd4da;
   background: #f8fafc;
 }
@@ -280,6 +333,14 @@ th {
 .inline-actions {
   display: flex;
   gap: 6px;
+}
+
+.market-actions {
+  justify-content: flex-end;
+}
+
+.market-actions button {
+  width: 180px;
 }
 
 .inline-actions button {
@@ -355,10 +416,22 @@ th {
   }
 
   .market-form {
+    gap: 10px;
+  }
+
+  .market-fieldset-grid {
     grid-template-columns: 1fr;
   }
 
   .inline-actions {
     flex-direction: column;
+  }
+
+  .market-actions {
+    justify-content: stretch;
+  }
+
+  .market-actions button {
+    width: 100%;
   }
 }
