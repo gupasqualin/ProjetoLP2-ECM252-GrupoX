@@ -1,0 +1,15 @@
+{
+  "name": "ms-barramento-eventos",
+  "version": "1.0.0",
+  "description": "Microsservico de Barramento de Eventos - DecisionDCF",
+  "type": "module",
+  "main": "src/server_barramento-eventos.js",
+  "scripts": {
+    "start": "node src/server_barramento-eventos.js",
+    "dev": "node --watch src/server_barramento-eventos.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
