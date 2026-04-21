@@ -22,6 +22,26 @@ const initialMarketDataForm = {
   workingCapital: ''
 };
 
+const fieldRules = {
+  currentStockPrice: { min: 0 },
+  sharesOutstanding: { min: 0 },
+  beta: { min: 0, max: 1 },
+  totalDebt: { min: 0 },
+  costOfDebt: { min: 0, max: 1 },
+  effectiveTaxRate: { min: 0, max: 1 },
+  cash: { min: 0 },
+  netDebt: { min: 0 },
+  revenue: { min: 0 },
+  capex: { min: 0 },
+  depreciation: { min: 0 }
+};
+
+function isPartialNumber(value, allowNegative) {
+  return allowNegative
+    ? /^-?\d*([.,]\d*)?$/.test(value)
+    : /^\d*([.,]\d*)?$/.test(value);
+}
+
 function DadosMercadoPage() {
   const [companies, setCompanies] = useState([]);
   const [marketDataList, setMarketDataList] = useState([]);
@@ -65,6 +85,37 @@ function DadosMercadoPage() {
 
   const handleMarketDataChange = (event) => {
     const { name, value } = event.target;
+
+    if (name === 'companyId') {
+      setMarketDataForm((prev) => ({
+        ...prev,
+        [name]: value
+      }));
+      return;
+    }
+
+    const rule = fieldRules[name];
+    if (rule) {
+      const allowNegative = rule.min === undefined || rule.min < 0;
+
+      if (value !== '' && !isPartialNumber(value, allowNegative)) {
+        return;
+      }
+
+      if (value !== '') {
+        const normalized = Number(value.replace(',', '.'));
+        if (Number.isFinite(normalized)) {
+          if (rule.min !== undefined && normalized < rule.min) {
+            return;
+          }
+
+          if (rule.max !== undefined && normalized > rule.max) {
+            return;
+          }
+        }
+      }
+    }
+
     setMarketDataForm((prev) => ({
       ...prev,
       [name]: value
@@ -236,6 +287,7 @@ function DadosMercadoPage() {
                   name="beta"
                   type="number"
                   min="0"
+                  max="1"
                   step="any"
                   placeholder="Beta da empresa"
                   value={marketDataForm.beta}
@@ -265,6 +317,8 @@ function DadosMercadoPage() {
                   id="costOfDebt"
                   name="costOfDebt"
                   type="number"
+                  min="0"
+                  max="1"
                   step="any"
                   placeholder="Custo da dívida (0 a 1)"
                   value={marketDataForm.costOfDebt}
@@ -279,6 +333,8 @@ function DadosMercadoPage() {
                   id="effectiveTaxRate"
                   name="effectiveTaxRate"
                   type="number"
+                  min="0"
+                  max="1"
                   step="any"
                   placeholder="Alíquota efetiva de IR (0 a 1)"
                   value={marketDataForm.effectiveTaxRate}
