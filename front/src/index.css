@@ -9,6 +9,13 @@ body {
   color: #1f2933;
 }
 
+input,
+select,
+button,
+textarea {
+  font-family: inherit;
+}
+
 #root {
   min-height: 100vh;
   padding: 8px;
