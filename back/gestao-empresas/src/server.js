@@ -7,12 +7,9 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-let companies = [
-  { id: 1, name: 'WEG S.A.', ticker: 'WEGE3', sector: 'Bens Industriais' },
-  { id: 2, name: 'Petrobras', ticker: 'PETR4', sector: 'Energia' }
-];
+let companies = [];
 
-let nextId = companies.length + 1;
+let nextId = 1;
 
 app.get('/health', (req, res) => {
   res.status(200).json({
