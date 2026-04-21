@@ -12,14 +12,14 @@ function App() {
           <div className="brand right">2026</div>
         </header>
 
-        <div className="title-strip">Microservicos</div>
+        <div className="title-strip">Modelo FCD</div>
 
         <nav className="app-nav" aria-label="Navegacao principal">
           <NavLink
             to="/gestao-empresas"
             className={({ isActive }) => `app-nav-link${isActive ? ' active' : ''}`}
           >
-            Gestao de Empresas
+            Gestão de Empresas
           </NavLink>
           <NavLink
             to="/dados-mercado"

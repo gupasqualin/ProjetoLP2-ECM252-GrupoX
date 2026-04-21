@@ -19,7 +19,7 @@ function GestaoEmpresasPage() {
       const response = await axios.get(`${API_BASE_URL}/empresas`);
       setCompanies(response.data);
     } catch {
-      setCompanyError('Nao foi possivel carregar as empresas. Verifique se o microservico esta ativo.');
+      setCompanyError('Não foi possível carregar as empresas. Verifique se o microserviço esta ativo.');
     }
   };
 
@@ -51,7 +51,7 @@ function GestaoEmpresasPage() {
       setCompanySuccess('Empresa cadastrada com sucesso.');
     } catch (error) {
       const message = error?.response?.data?.message
-        || 'Erro ao cadastrar empresa. Verifique se o microservico esta ativo.';
+        || 'Erro ao cadastrar empresa. Verifique se o microserviço esta ativo.';
       setCompanyError(message);
     } finally {
       setCompanyLoading(false);
@@ -75,7 +75,7 @@ function GestaoEmpresasPage() {
   return (
     <section className="company-section">
       <article className="panel company-panel">
-        <h2>Catalogo de Empresas</h2>
+        <h2>Catálogo de Empresas</h2>
 
         <form className="company-form" onSubmit={handleCompanySubmit}>
           <input

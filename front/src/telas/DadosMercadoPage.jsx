@@ -45,7 +45,7 @@ function DadosMercadoPage() {
       const sorted = [...response.data].sort((a, b) => a.companyId - b.companyId);
       setMarketDataList(sorted);
     } catch {
-      setMarketDataError('Nao foi possivel carregar o Market Data. Verifique se o microservico esta ativo.');
+      setMarketDataError('Não foi possível carregar o Dados de Mercado. Verifique se o microserviço esta ativo.');
     }
   };
 
@@ -197,17 +197,17 @@ function DadosMercadoPage() {
 
           <div className="market-fieldset-grid">
             <fieldset className="market-fieldset">
-              <legend>Precificacao e Risco</legend>
+              <legend>Precificacão e Risco</legend>
 
               <div className="market-field">
-                <label htmlFor="currentStockPrice">Preco atual da acao</label>
+                <label htmlFor="currentStockPrice">Preço atual da ação</label>
                 <input
                   id="currentStockPrice"
                   name="currentStockPrice"
                   type="number"
                   min="0"
                   step="any"
-                  placeholder="Preco atual da acao (R$)"
+                  placeholder="Preço atual da ação (R$)"
                   value={marketDataForm.currentStockPrice}
                   onChange={handleMarketDataChange}
                   required
@@ -215,14 +215,14 @@ function DadosMercadoPage() {
               </div>
 
               <div className="market-field">
-                <label htmlFor="sharesOutstanding">Acoes emitidas</label>
+                <label htmlFor="sharesOutstanding">Ações emitidas</label>
                 <input
                   id="sharesOutstanding"
                   name="sharesOutstanding"
                   type="number"
                   min="0"
                   step="any"
-                  placeholder="Total de acoes emitidas"
+                  placeholder="Total de ações emitidas"
                   value={marketDataForm.sharesOutstanding}
                   onChange={handleMarketDataChange}
                   required
@@ -245,14 +245,14 @@ function DadosMercadoPage() {
               </div>
 
               <div className="market-field">
-                <label htmlFor="totalDebt">Divida bruta total</label>
+                <label htmlFor="totalDebt">Dívida bruta total</label>
                 <input
                   id="totalDebt"
                   name="totalDebt"
                   type="number"
                   min="0"
                   step="any"
-                  placeholder="Divida bruta total (R$)"
+                  placeholder="Dívida bruta total (R$)"
                   value={marketDataForm.totalDebt}
                   onChange={handleMarketDataChange}
                   required
@@ -260,13 +260,13 @@ function DadosMercadoPage() {
               </div>
 
               <div className="market-field">
-                <label htmlFor="costOfDebt">Custo da divida</label>
+                <label htmlFor="costOfDebt">Custo da dívida</label>
                 <input
                   id="costOfDebt"
                   name="costOfDebt"
                   type="number"
                   step="any"
-                  placeholder="Custo da divida (0 a 1)"
+                  placeholder="Custo da dívida (0 a 1)"
                   value={marketDataForm.costOfDebt}
                   onChange={handleMarketDataChange}
                   required
@@ -274,13 +274,13 @@ function DadosMercadoPage() {
               </div>
 
               <div className="market-field">
-                <label htmlFor="effectiveTaxRate">Aliquota efetiva de IR</label>
+                <label htmlFor="effectiveTaxRate">Alíquota efetiva de IR</label>
                 <input
                   id="effectiveTaxRate"
                   name="effectiveTaxRate"
                   type="number"
                   step="any"
-                  placeholder="Aliquota efetiva de IR (0 a 1)"
+                  placeholder="Alíquota efetiva de IR (0 a 1)"
                   value={marketDataForm.effectiveTaxRate}
                   onChange={handleMarketDataChange}
                   required
@@ -307,14 +307,14 @@ function DadosMercadoPage() {
               </div>
 
               <div className="market-field">
-                <label htmlFor="netDebt">Divida liquida</label>
+                <label htmlFor="netDebt">Dívida líquida</label>
                 <input
                   id="netDebt"
                   name="netDebt"
                   type="number"
                   min="0"
                   step="any"
-                  placeholder="Divida liquida (R$)"
+                  placeholder="Dívida líquida (R$)"
                   value={marketDataForm.netDebt}
                   onChange={handleMarketDataChange}
                   required
@@ -322,14 +322,14 @@ function DadosMercadoPage() {
               </div>
 
               <div className="market-field">
-                <label htmlFor="revenue">Receita liquida</label>
+                <label htmlFor="revenue">Receita líquida</label>
                 <input
                   id="revenue"
                   name="revenue"
                   type="number"
                   min="0"
                   step="any"
-                  placeholder="Receita liquida (R$)"
+                  placeholder="Receita líquida (R$)"
                   value={marketDataForm.revenue}
                   onChange={handleMarketDataChange}
                   required
@@ -372,7 +372,7 @@ function DadosMercadoPage() {
                   type="number"
                   min="0"
                   step="any"
-                  placeholder="Capex do exercicio (R$)"
+                  placeholder="Capex do exercício (R$)"
                   value={marketDataForm.capex}
                   onChange={handleMarketDataChange}
                   required
@@ -380,14 +380,14 @@ function DadosMercadoPage() {
               </div>
 
               <div className="market-field">
-                <label htmlFor="depreciation">Depreciacao e amortizacao</label>
+                <label htmlFor="depreciation">Depreciação e amortização</label>
                 <input
                   id="depreciation"
                   name="depreciation"
                   type="number"
                   min="0"
                   step="any"
-                  placeholder="Depreciacao e amortizacao (R$)"
+                  placeholder="Depreciação e amortização (R$)"
                   value={marketDataForm.depreciation}
                   onChange={handleMarketDataChange}
                   required
@@ -395,13 +395,13 @@ function DadosMercadoPage() {
               </div>
 
               <div className="market-field">
-                <label htmlFor="workingCapital">Capital de giro liquido</label>
+                <label htmlFor="workingCapital">Capital de giro líquido</label>
                 <input
                   id="workingCapital"
                   name="workingCapital"
                   type="number"
                   step="any"
-                  placeholder="Capital de giro liquido (R$)"
+                  placeholder="Capital de giro líquido (R$)"
                   value={marketDataForm.workingCapital}
                   onChange={handleMarketDataChange}
                   required
@@ -426,9 +426,9 @@ function DadosMercadoPage() {
               <th>Empresa</th>
               <th>Receita</th>
               <th>EBITDA</th>
-              <th>Divida Liquida</th>
+              <th>Dívida Líquida</th>
               <th>Beta</th>
-              <th>Preco Atual</th>
+              <th>Preço Atual</th>
               <th>Atualizado em</th>
               <th className="action-cell"></th>
             </tr>
