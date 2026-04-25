@@ -224,6 +224,371 @@ th {
   cursor: not-allowed;
 }
 
+.secondary-btn {
+  background: #6b7280 !important;
+  border-color: #6b7280 !important;
+}
+
+.secondary-btn:hover {
+  background: #4b5563 !important;
+  border-color: #4b5563 !important;
+}
+
+.feedback {
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.feedback.error {
+  color: #b42318;
+}
+
+.feedback.success {
+  color: #067647;
+}
+
+.action-cell {
+  text-align: center;
+  width: 38px;
+  min-width: 38px;
+  max-width: 38px;
+  padding-left: 4px;
+  padding-right: 4px;
+  white-space: nowrap;
+}
+
+.delete-company-btn {
+  border: 0;
+  background: transparent;
+  color: #7a828d;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0;
+}
+
+.delete-company-btn:hover {
+  color: #5d6672;
+}
+
+/* Estilos para a tela de Premissas de Projeção */
+.assumptions {
+  margin-bottom: 12px;
+}
+
+.assumption-list {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.assumption-list label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #38404a;
+}
+
+.assumption-list input,
+.assumption-list select {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid #cfd4da;
+  background: #f8fafc;
+}
+
+.assumption-list .full-width {
+  grid-column: 1 / -1;
+}
+
+.assumption-actions {
+  justify-content: flex-start;  
+  /* estilos gerais para a tela de premissas de projeção */
+}  
+  .dcf-page {
+    background: #f2f4f7;
+    border: 1px solid #cfd4da;
+    margin: 24px auto;
+    max-width: 1200px;
+  }
+  
+  .top-header {
+    background: #163a6b;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  .brand {
+    font-weight: 600;
+  }
+  
+  .brand.right {
+    opacity: 0.95;
+  }
+  
+  .title-strip {
+    background: #9cb2d0;
+    color: #0d2f5b;
+    font-weight: 700;
+    padding: 6px 12px;
+  }
+  
+  .app-nav {
+    display: flex;
+    gap: 8px;
+    padding: 12px 14px;
+    background: #edf2f8;
+    border-bottom: 1px solid #d7dce2;
+  }
+  
+  .app-nav-link {
+    text-decoration: none;
+    color: #264266;
+    border: 1px solid #c7d2df;
+    background: #fff;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  .app-nav-link.active {
+    background: #1f4f8a;
+    border-color: #1f4f8a;
+    color: #fff;
+  }
+  
+  .screen-wrap {
+    padding-top: 2px;
+  }
+  
+  .panel {
+    background: #fff;
+    border: 1px solid #d7dce2;
+    padding: 12px;
+  }
+  
+  .panel h2 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #30343b;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid #d7dce2;
+  }
+  
+  th,
+  td {
+    border-bottom: 1px solid #e6e9ee;
+    padding: 8px;
+    text-align: right;
+    font-size: 13px;
+  }
+  
+  th:first-child,
+  td:first-child {
+    text-align: left;
+  }
+  
+  th {
+    background: #f2f5f9;
+    color: #29303a;
+  }
+  
+  /* estilos Componente: GestaoEmpresasPage.jsx */
+  
+  .company-section {
+    padding: 0 14px 14px;
+    display: grid;
+    gap: 12px;
+  }
+  
+  .company-panel h2 {
+    margin-bottom: 12px;
+  }
+  
+  .company-form {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.5fr auto;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  
+  .company-form input {
+    padding: 8px;
+    border: 1px solid #cfd4da;
+    background: #f8fafc;
+  }
+  
+  .company-form button {
+    border: 1px solid #1f4f8a;
+    background: #1f4f8a;
+    color: #fff;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  
+  .company-form button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
+  /*estilols para DadosMercadoPage.jsx  */
+  
+  .market-form {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  
+  .market-company-field {
+    max-width: 420px;
+  }
+  
+  .market-company-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: #38404a;
+  }
+  
+  .market-company-field select {
+    width: 100%;
+    padding: 6px;
+    box-sizing: border-box;
+    border: 1px solid #cfd4da;
+    background: #f8fafc;
+  }
+  
+  .market-fieldset-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .market-fieldset {
+    border: 1px solid #d7dce2;
+    border-radius: 0;
+    padding: 12px;
+    background: #fff;
+  }
+  
+  .market-fieldset legend {
+    font-weight: 700;
+    color: #2f3540;
+    padding: 0 6px;
+  }
+  
+  .market-field {
+    margin-bottom: 10px;
+  }
+  
+  .market-field:last-child {
+    margin-bottom: 0;
+  }
+  
+  .market-field label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: #38404a;
+  }
+  
+  .market-field input {
+    width: 100%;
+    padding: 6px;
+    box-sizing: border-box;
+    border: 1px solid #cfd4da;
+    background: #f8fafc;
+  }
+  
+  .market-actions {
+    justify-content: flex-end;
+  }
+  
+  .assumption-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.assumption-list label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #38404a;
+}
+
+.assumption-list label span {
+  font-weight: 500;
+}
+
+.assumption-list input,
+.assumption-list select {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid #cfd4da;
+  background: #f8fafc;
+}
+
+.assumption-list input:disabled,
+.assumption-list select:disabled {
+  background: #edf0f3;
+  color: #9aa0a9;
+  cursor: not-allowed;
+}
+
+.assumption-list label.full-width,
+.assumption-list .full-width {
+  grid-column: 1 / -1;
+}
+
+.assumption-actions {
+  justify-content: flex-start;
+  margin-top: 4px;
+}
+
+/* estilos usados em várias telas */
+
+.inline-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.inline-actions button {
+  border: 1px solid #1f4f8a;
+  background: #1f4f8a;
+  color: #fff;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.inline-actions button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.secondary-btn {
+  background: #6b7280 !important;
+  border-color: #6b7280 !important;
+}
+
+.secondary-btn:hover {
+  background: #4b5563 !important;
+  border-color: #4b5563 !important;
+}
+
 .feedback {
   margin: 8px 0;
   font-size: 13px;
@@ -284,5 +649,9 @@ th {
 
   .market-actions button {
     width: 100%;
+  }
+
+  .assumption-list {
+    grid-template-columns: 1fr;
   }
 }
