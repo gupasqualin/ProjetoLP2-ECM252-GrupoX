@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL_COMPANIES = '/api';
+const API_BASE_URL_PREMISSAS = '/api-premissas';
 
 const initialAssumptionsForm = {
   companyId: '',
   projectionYears: 5,
-  discountRate: '',
   riskFreeRate: '',
   marketRiskPremium: '',
   workingCapitalChangePercentOfRevenue: '',
@@ -17,13 +17,6 @@ const initialAssumptionsForm = {
   perpetualGrowthRate: '',
   exitMultiple: ''
 };
-
-function isPartialNumber(value, allowNegative = false) {
-  const numberPattern = allowNegative
-    ? /^-?(?:\d+|\d{1,3}(?:\.\d{3})*)(?:[.,]\d*)?$/
-    : /^(?:\d+|\d{1,3}(?:\.\d{3})*)(?:[.,]\d*)?$/;
-  return numberPattern.test(value);
-}
 
 function PremissasProjecaoPage() {
   const [companies, setCompanies] = useState([]);
@@ -38,7 +31,7 @@ function PremissasProjecaoPage() {
 
   const loadCompanies = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/empresas`);
+      const response = await axios.get(`${API_BASE_URL_COMPANIES}/empresas`);
       setCompanies(response.data);
     } catch {
       setAssumptionsError('Não foi possível carregar as empresas. Verifique se o microserviço está ativo.');
@@ -47,7 +40,7 @@ function PremissasProjecaoPage() {
 
   const loadAssumptions = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/premissas`);
+      const response = await axios.get(`${API_BASE_URL_PREMISSAS}/premissas`);
       setAssumptionsList(response.data);
     } catch {
       setAssumptionsError('Não foi possível carregar as premissas.');
@@ -85,7 +78,11 @@ function PremissasProjecaoPage() {
 
   const normalizeNumber = (value) => {
     if (!value) return '';
-    return value.toString().replace(/\./g, '').replace(',', '.').trim();
+    const raw = value.toString().trim();
+    if (raw.includes(',')) {
+      return raw.replace(/\./g, '').replace(',', '.');
+    }
+    return raw;
   };
 
   const parseNumber = (value) => {
@@ -102,13 +99,16 @@ function PremissasProjecaoPage() {
     try {
       const companyId = parseInt(assumptionsForm.companyId, 10);
 
-      if (!companyId) {
-        setAssumptionsError('Selecione uma empresa.');
-        setAssumptionsLoading(false);
+      if (companies.length === 0) {
+        setAssumptionsError('Cadastre uma empresa antes de adicionar premissas.');
         return;
       }
 
-      const discountRate = parseNumber(assumptionsForm.discountRate);
+      if (!companyId) {
+        setAssumptionsError('Selecione uma empresa.');
+        return;
+      }
+
       const riskFreeRate = assumptionsForm.riskFreeRate
         ? parseNumber(assumptionsForm.riskFreeRate)
         : null;
@@ -117,20 +117,22 @@ function PremissasProjecaoPage() {
         : null;
 
       const revenueGrowthArray = assumptionsForm.revenueGrowthByYear
-        .split(/[;,]+/)
+        .split(/;|\n+/)
+        .map((x) => x.trim())
+        .filter(Boolean)
         .map((x) => parseNumber(x))
-        .filter((x) => !isNaN(x));
+        .filter((x) => !Number.isNaN(x));
 
       if (revenueGrowthArray.length !== parseInt(assumptionsForm.projectionYears, 10)) {
-        setAssumptionsError(`Informe ${assumptionsForm.projectionYears} taxas de crescimento separadas por vírgula ou ponto e vírgula.`);
-        setAssumptionsLoading(false);
+        setAssumptionsError(
+          `Informe ${assumptionsForm.projectionYears} taxas de crescimento separadas por ponto e vírgula.`
+        );
         return;
       }
 
       const payload = {
         companyId,
         projectionYears: parseInt(assumptionsForm.projectionYears, 10),
-        discountRate: isNaN(discountRate) ? 0 : discountRate,
         riskFreeRate: isNaN(riskFreeRate) ? null : riskFreeRate,
         marketRiskPremium: isNaN(marketRiskPremium) ? null : marketRiskPremium,
         workingCapitalChangePercentOfRevenue: parseNumber(
@@ -151,21 +153,39 @@ function PremissasProjecaoPage() {
 
       if (assumptionsForm.terminalValueMethod === 'EXIT_MULTIPLE') {
         const exitMultiple = parseNumber(assumptionsForm.exitMultiple);
-        payload.exitMultiple = isNaN(exitMultiple) ? null : exitMultiple;
+        payload.exitMultiple = Number.isNaN(exitMultiple) ? null : exitMultiple;
       } else {
         payload.exitMultiple = null;
       }
 
-      const response = await axios.post(`${API_BASE_URL}/premissas`, payload);
+      let response;
+      try {
+        response = await axios.post(`${API_BASE_URL_PREMISSAS}/premissas`, payload);
+      } catch (postError) {
+        // Se retornar 409 (já existem premissas), tenta atualizar com PUT
+        if (postError.response?.status === 409) {
+          response = await axios.put(
+            `${API_BASE_URL_PREMISSAS}/premissas/${payload.companyId}`,
+            payload
+          );
+        } else {
+          throw postError;
+        }
+      }
+
       setAssumptionsList((prev) => {
         const filtered = prev.filter((x) => x.companyId !== payload.companyId);
         return [...filtered, response.data];
       });
+      // ensure source of truth is the premissas service
+      // (response already contains the saved data)
       resetForm();
       setAssumptionsSuccess('Premissas salvas com sucesso!');
     } catch (error) {
       setAssumptionsError(
-        error.response?.data?.message || 'Erro ao salvar premissas. Tente novamente.'
+        error.response?.data?.message
+          || error.message
+          || 'Erro ao salvar premissas. Tente novamente.'
       );
     } finally {
       setAssumptionsLoading(false);
@@ -182,16 +202,17 @@ function PremissasProjecaoPage() {
 
       if (!companyId) {
         setValuationError('Selecione uma empresa para calcular o valuation.');
-        setValuationLoading(false);
         return;
       }
 
       const payload = { companyId };
-      await axios.post(`${API_BASE_URL}/valuations/recalculate`, payload);
+      await axios.post(`${API_BASE_URL_COMPANIES}/valuations/recalculate`, payload);
       setValuationSuccess('Valuation recalculado com sucesso!');
     } catch (error) {
       setValuationError(
-        error.response?.data?.message || 'Erro ao recalcular valuation. Tente novamente.'
+        error.response?.data?.message
+          || error.message
+          || 'Erro ao recalcular valuation. Tente novamente.'
       );
     } finally {
       setValuationLoading(false);
@@ -201,12 +222,14 @@ function PremissasProjecaoPage() {
   const handleAssumptionsDelete = async (companyId) => {
     if (confirm('Tem certeza que deseja remover essas premissas?')) {
       try {
-        await axios.delete(`${API_BASE_URL}/premissas/${companyId}`);
+        await axios.delete(`${API_BASE_URL_PREMISSAS}/premissas/${companyId}`);
         setAssumptionsList((prev) => prev.filter((x) => x.companyId !== companyId));
         setAssumptionsSuccess('Premissas removidas com sucesso!');
       } catch (error) {
         setAssumptionsError(
-          error.response?.data?.message || 'Erro ao remover premissas. Tente novamente.'
+          error.response?.data?.message
+            || error.message
+            || 'Erro ao remover premissas. Tente novamente.'
         );
       }
     }
@@ -254,6 +277,10 @@ function PremissasProjecaoPage() {
             </select>
           </label>
 
+          {companies.length === 0 && (
+            <p className="feedback error">Cadastre uma empresa antes de adicionar premissas.</p>
+          )}
+
           <label>
             <span>Anos de Projeção</span>
             <input
@@ -268,23 +295,6 @@ function PremissasProjecaoPage() {
           </label>
 
           <label>
-            <span>Taxa de Desconto (0 a 1)</span>
-            <input
-              name="discountRate"
-              type="text"
-              value={assumptionsForm.discountRate}
-              onChange={handleAssumptionChange}
-              onBlur={(e) => {
-                if (e.target.value && !isPartialNumber(e.target.value, true)) {
-                  e.target.value = '';
-                }
-              }}
-              placeholder="0,10"
-              required
-            />
-          </label>
-
-          <label>
             <span>Taxa Livre de Risco (opcional)</span>
             <input
               name="riskFreeRate"
@@ -292,11 +302,6 @@ function PremissasProjecaoPage() {
               placeholder="Padrão: 0,045 (4,5%)"
               value={assumptionsForm.riskFreeRate}
               onChange={handleAssumptionChange}
-              onBlur={(e) => {
-                if (e.target.value && !isPartialNumber(e.target.value, true)) {
-                  e.target.value = '';
-                }
-              }}
             />
           </label>
 
@@ -308,11 +313,6 @@ function PremissasProjecaoPage() {
               placeholder="Padrão: 0,055 (5,5%)"
               value={assumptionsForm.marketRiskPremium}
               onChange={handleAssumptionChange}
-              onBlur={(e) => {
-                if (e.target.value && !isPartialNumber(e.target.value, true)) {
-                  e.target.value = '';
-                }
-              }}
             />
           </label>
 
@@ -323,11 +323,6 @@ function PremissasProjecaoPage() {
               type="text"
               value={assumptionsForm.workingCapitalChangePercentOfRevenue}
               onChange={handleAssumptionChange}
-              onBlur={(e) => {
-                if (e.target.value && !isPartialNumber(e.target.value, true)) {
-                  e.target.value = '';
-                }
-              }}
               placeholder="0,05"
               required
             />
@@ -353,11 +348,6 @@ function PremissasProjecaoPage() {
               type="text"
               value={assumptionsForm.projectedEbitdaMargin}
               onChange={handleAssumptionChange}
-              onBlur={(e) => {
-                if (e.target.value && !isPartialNumber(e.target.value, true)) {
-                  e.target.value = '';
-                }
-              }}
               placeholder="0,25"
               required
             />
@@ -367,7 +357,7 @@ function PremissasProjecaoPage() {
             <span>Cresc. Receita por Ano</span>
             <input
               name="revenueGrowthByYear"
-              placeholder="Ex: 0,1;0,08;0,07"
+              placeholder="Ex: 0,1;0,08;0,07;0,05;0,03"
               value={assumptionsForm.revenueGrowthByYear}
               onChange={handleAssumptionChange}
               required
@@ -381,11 +371,6 @@ function PremissasProjecaoPage() {
               type="text"
               value={assumptionsForm.capexPercentOfRevenue}
               onChange={handleAssumptionChange}
-              onBlur={(e) => {
-                if (e.target.value && !isPartialNumber(e.target.value, true)) {
-                  e.target.value = '';
-                }
-              }}
               placeholder="0,08"
               required
             />
@@ -398,11 +383,6 @@ function PremissasProjecaoPage() {
               type="text"
               value={assumptionsForm.perpetualGrowthRate}
               onChange={handleAssumptionChange}
-              onBlur={(e) => {
-                if (e.target.value && !isPartialNumber(e.target.value, true)) {
-                  e.target.value = '';
-                }
-              }}
               placeholder="0,03"
               required
             />
@@ -415,11 +395,6 @@ function PremissasProjecaoPage() {
               type="text"
               value={assumptionsForm.exitMultiple}
               onChange={handleAssumptionChange}
-              onBlur={(e) => {
-                if (e.target.value && !isPartialNumber(e.target.value, true)) {
-                  e.target.value = '';
-                }
-              }}
               placeholder="6,0"
               disabled={assumptionsForm.terminalValueMethod !== 'EXIT_MULTIPLE'}
               required={assumptionsForm.terminalValueMethod === 'EXIT_MULTIPLE'}
@@ -463,7 +438,7 @@ function PremissasProjecaoPage() {
             <tr>
               <th>Empresa</th>
               <th>Anos</th>
-              <th>Taxa Desc.</th>
+              <th>WACC</th>
               <th>Rf</th>
               <th>MRP</th>
               <th>g</th>

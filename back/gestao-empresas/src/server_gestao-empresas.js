@@ -64,6 +64,28 @@ app.post('/empresas', (req, res) => {
   publishEvent('COMPANY_UPSERTED', { payload: newCompany });
 });
 
+app.post('/valuations/recalculate', (req, res) => {
+  const companyId = Number(req.body?.companyId);
+
+  if (!Number.isInteger(companyId) || companyId <= 0) {
+    return res.status(400).json({
+      message: 'companyId deve ser um inteiro positivo.'
+    });
+  }
+
+  const exists = companies.some((company) => company.id === companyId);
+  if (!exists) {
+    return res.status(404).json({
+      message: 'Empresa não encontrada.'
+    });
+  }
+
+  publishEvent('VALUATION_RECALCULATE_REQUESTED', { companyId });
+  return res.status(202).json({
+    message: 'Recalculo de valuation enfileirado.'
+  });
+});
+
 app.delete('/empresas/:id', (req, res) => {
   const id = Number(req.params.id);
   const exists = companies.some((company) => company.id === id);

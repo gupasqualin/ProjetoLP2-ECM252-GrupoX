@@ -135,7 +135,7 @@ function validateAndNormalizeMarketData(payload, options = {}) {
   }
 
   if (normalized.beta <= 0) {
-    return { error: 'beta deve ser maior que 0.' };
+    return { error: 'beta deve ser maior que 0. Use valores como 1.2, 0.8, 1.5, etc.' };
   }
 
   if (normalized.revenue <= 0) {

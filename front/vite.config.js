@@ -5,7 +5,12 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    proxy: {
+        proxy: {
+      '/api-premissas': {
+        target: 'http://localhost:3003',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api-premissas/, '')
+      },
       '/api-market-data': {
         target: 'http://localhost:3002',
         changeOrigin: true,
