@@ -25,7 +25,7 @@ const initialMarketDataForm = {
 const fieldRules = {
   currentStockPrice: { min: 0 },
   sharesOutstanding: { min: 0 },
-  beta: { min: 0, max: 1 },
+  beta: { min: 0 },
   totalDebt: { min: 0 },
   costOfDebt: { min: 0, max: 1 },
   effectiveTaxRate: { min: 0, max: 1 },
@@ -40,6 +40,14 @@ function isPartialNumber(value, allowNegative) {
   return allowNegative
     ? /^-?\d*([.,]\d*)?$/.test(value)
     : /^\d*([.,]\d*)?$/.test(value);
+}
+
+function normalizeDecimalInput(value) {
+  if (value === '') {
+    return '';
+  }
+
+  return value.toString().trim().replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
 }
 
 function DadosMercadoPage() {
@@ -103,7 +111,7 @@ function DadosMercadoPage() {
       }
 
       if (value !== '') {
-        const normalized = Number(value.replace(',', '.'));
+        const normalized = Number(normalizeDecimalInput(value));
         if (Number.isFinite(normalized)) {
           if (rule.min !== undefined && normalized < rule.min) {
             return;
@@ -135,20 +143,20 @@ function DadosMercadoPage() {
     const companyId = Number(marketDataForm.companyId);
     const payload = {
       companyId,
-      currentStockPrice: Number(marketDataForm.currentStockPrice),
-      sharesOutstanding: Number(marketDataForm.sharesOutstanding),
-      beta: Number(marketDataForm.beta),
-      totalDebt: Number(marketDataForm.totalDebt),
-      costOfDebt: Number(marketDataForm.costOfDebt),
-      effectiveTaxRate: Number(marketDataForm.effectiveTaxRate),
-      cash: Number(marketDataForm.cash),
-      netDebt: Number(marketDataForm.netDebt),
-      revenue: Number(marketDataForm.revenue),
-      ebitda: Number(marketDataForm.ebitda),
-      ebit: Number(marketDataForm.ebit),
-      capex: Number(marketDataForm.capex),
-      depreciation: Number(marketDataForm.depreciation),
-      workingCapital: Number(marketDataForm.workingCapital)
+      currentStockPrice: Number(normalizeDecimalInput(marketDataForm.currentStockPrice)),
+      sharesOutstanding: Number(normalizeDecimalInput(marketDataForm.sharesOutstanding)),
+      beta: Number(normalizeDecimalInput(marketDataForm.beta)),
+      totalDebt: Number(normalizeDecimalInput(marketDataForm.totalDebt)),
+      costOfDebt: Number(normalizeDecimalInput(marketDataForm.costOfDebt)),
+      effectiveTaxRate: Number(normalizeDecimalInput(marketDataForm.effectiveTaxRate)),
+      cash: Number(normalizeDecimalInput(marketDataForm.cash)),
+      netDebt: Number(normalizeDecimalInput(marketDataForm.netDebt)),
+      revenue: Number(normalizeDecimalInput(marketDataForm.revenue)),
+      ebitda: Number(normalizeDecimalInput(marketDataForm.ebitda)),
+      ebit: Number(normalizeDecimalInput(marketDataForm.ebit)),
+      capex: Number(normalizeDecimalInput(marketDataForm.capex)),
+      depreciation: Number(normalizeDecimalInput(marketDataForm.depreciation)),
+      workingCapital: Number(normalizeDecimalInput(marketDataForm.workingCapital))
     };
 
     if (!companyId) {
@@ -255,10 +263,9 @@ function DadosMercadoPage() {
                 <input
                   id="currentStockPrice"
                   name="currentStockPrice"
-                  type="number"
-                  min="0"
-                  step="any"
-                  placeholder="Preço atual da ação (R$)"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 150,50"
                   value={marketDataForm.currentStockPrice}
                   onChange={handleMarketDataChange}
                   required
@@ -270,10 +277,9 @@ function DadosMercadoPage() {
                 <input
                   id="sharesOutstanding"
                   name="sharesOutstanding"
-                  type="number"
-                  min="0"
-                  step="any"
-                  placeholder="Total de ações emitidas"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 1000000000"
                   value={marketDataForm.sharesOutstanding}
                   onChange={handleMarketDataChange}
                   required
@@ -285,11 +291,9 @@ function DadosMercadoPage() {
                 <input
                   id="beta"
                   name="beta"
-                  type="number"
-                  min="0"
-                  max="1"
-                  step="any"
-                  placeholder="Beta da empresa"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 1,2"
                   value={marketDataForm.beta}
                   onChange={handleMarketDataChange}
                   required
@@ -301,10 +305,9 @@ function DadosMercadoPage() {
                 <input
                   id="totalDebt"
                   name="totalDebt"
-                  type="number"
-                  min="0"
-                  step="any"
-                  placeholder="Dívida bruta total (R$)"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 5000000000"
                   value={marketDataForm.totalDebt}
                   onChange={handleMarketDataChange}
                   required
@@ -316,11 +319,9 @@ function DadosMercadoPage() {
                 <input
                   id="costOfDebt"
                   name="costOfDebt"
-                  type="number"
-                  min="0"
-                  max="1"
-                  step="any"
-                  placeholder="Custo da dívida (0 a 1)"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 0,05"
                   value={marketDataForm.costOfDebt}
                   onChange={handleMarketDataChange}
                   required
@@ -332,11 +333,9 @@ function DadosMercadoPage() {
                 <input
                   id="effectiveTaxRate"
                   name="effectiveTaxRate"
-                  type="number"
-                  min="0"
-                  max="1"
-                  step="any"
-                  placeholder="Alíquota efetiva de IR (0 a 1)"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 0,15"
                   value={marketDataForm.effectiveTaxRate}
                   onChange={handleMarketDataChange}
                   required
@@ -352,10 +351,9 @@ function DadosMercadoPage() {
                 <input
                   id="cash"
                   name="cash"
-                  type="number"
-                  min="0"
-                  step="any"
-                  placeholder="Caixa e equivalentes (R$)"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 500000000"
                   value={marketDataForm.cash}
                   onChange={handleMarketDataChange}
                   required
@@ -367,10 +365,9 @@ function DadosMercadoPage() {
                 <input
                   id="netDebt"
                   name="netDebt"
-                  type="number"
-                  min="0"
-                  step="any"
-                  placeholder="Dívida líquida (R$)"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 4500000000"
                   value={marketDataForm.netDebt}
                   onChange={handleMarketDataChange}
                   required
@@ -382,10 +379,9 @@ function DadosMercadoPage() {
                 <input
                   id="revenue"
                   name="revenue"
-                  type="number"
-                  min="0"
-                  step="any"
-                  placeholder="Receita líquida (R$)"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 10000000000"
                   value={marketDataForm.revenue}
                   onChange={handleMarketDataChange}
                   required
@@ -397,9 +393,9 @@ function DadosMercadoPage() {
                 <input
                   id="ebitda"
                   name="ebitda"
-                  type="number"
-                  step="any"
-                  placeholder="EBITDA (R$)"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 2500000000"
                   value={marketDataForm.ebitda}
                   onChange={handleMarketDataChange}
                   required
@@ -411,9 +407,9 @@ function DadosMercadoPage() {
                 <input
                   id="ebit"
                   name="ebit"
-                  type="number"
-                  step="any"
-                  placeholder="EBIT (R$)"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 2000000000"
                   value={marketDataForm.ebit}
                   onChange={handleMarketDataChange}
                   required
@@ -425,10 +421,9 @@ function DadosMercadoPage() {
                 <input
                   id="capex"
                   name="capex"
-                  type="number"
-                  min="0"
-                  step="any"
-                  placeholder="Capex do exercício (R$)"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 800000000"
                   value={marketDataForm.capex}
                   onChange={handleMarketDataChange}
                   required
@@ -440,10 +435,9 @@ function DadosMercadoPage() {
                 <input
                   id="depreciation"
                   name="depreciation"
-                  type="number"
-                  min="0"
-                  step="any"
-                  placeholder="Depreciação e amortização (R$)"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 600000000"
                   value={marketDataForm.depreciation}
                   onChange={handleMarketDataChange}
                   required
@@ -455,9 +449,9 @@ function DadosMercadoPage() {
                 <input
                   id="workingCapital"
                   name="workingCapital"
-                  type="number"
-                  step="any"
-                  placeholder="Capital de giro líquido (R$)"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 1000000000"
                   value={marketDataForm.workingCapital}
                   onChange={handleMarketDataChange}
                   required

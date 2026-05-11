@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Microsserviço de Gestão de Empresas - DecisionDCF",
   "type": "module",
-  "main": "src/server.js",
+  "main": "src/server_gestao-empresas.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "start": "node src/server_gestao-empresas.js",
+    "dev": "node --watch src/server_gestao-empresas.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

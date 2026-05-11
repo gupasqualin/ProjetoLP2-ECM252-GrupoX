@@ -1,4 +1,4 @@
-# Microsserviço 2 - Market Data
+# Microsserviço 2 - Dados de Mercado
 
 Serviço responsável por armazenar os dados atuais de balanço usados no modelo DCF.
 
