@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, NavLink, Route, Routes } from 'react-router-do
 import GestaoEmpresasPage from './telas/GestaoEmpresasPage';
 import DadosMercadoPage from './telas/DadosMercadoPage';
 import PremissasProjecaoPage from './telas/PremissasProjecaoPage';
+import ValuationPage from './telas/ValuationPage';
 import './App.css';
 
 function App() {
@@ -34,6 +35,12 @@ function App() {
           >
             Premissas de Projeção
           </NavLink>
+          <NavLink
+            to="/valuation"
+            className={({ isActive }) => `app-nav-link${isActive ? ' active' : ''}`}
+          >
+            Valuation
+          </NavLink>
         </nav>
 
         <section className="screen-wrap">
@@ -42,6 +49,7 @@ function App() {
             <Route path="/gestao-empresas" element={<GestaoEmpresasPage />} />
             <Route path="/dados-mercado" element={<DadosMercadoPage />} />
             <Route path="/premissas-projecao" element={<PremissasProjecaoPage />} />
+            <Route path="/valuation" element={<ValuationPage />} />
             <Route path="*" element={<Navigate to="/gestao-empresas" replace />} />
           </Routes>
         </section>
