@@ -98,7 +98,6 @@ async function fetchMarketData(companyId) {
         message = body.message;
       }
     } catch {
-      // mantém a mensagem padrão
     }
 
     return { error: message, status: response.status };
@@ -327,7 +326,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// NOTE: expose endpoints under /premissas to match front
 app.get('/premissas', (req, res) => {
   const list = Object.values(assumptionsByCompany).sort((a, b) => a.companyId - b.companyId);
   return res.status(200).json(list);

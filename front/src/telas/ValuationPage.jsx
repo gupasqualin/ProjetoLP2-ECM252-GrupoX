@@ -1,17 +1,17 @@
 function ValuationPage({
-  projectedCashFlows,
-  valuationResult,
-  summary,
-  rateComparison,
-  upsidePercent,
-  upsideRecommendation,
-  valuationLoading,
-  valuationError,
-  valuationSuccess,
-  handleRecalculateValuation,
-  formatNumber,
-  formatMoney,
-  formatRate
+  projectedCashFlows = [],           
+  valuationResult = {},              
+  summary = {},                      
+  rateComparison = {},               
+  upsidePercent = 0,                 
+  upsideRecommendation = '-',        
+  valuationLoading = false,          
+  valuationError = '',               
+  valuationSuccess = '',             
+  handleRecalculateValuation = () => {}, 
+  formatNumber = (value) => String(value ?? '-'), 
+  formatMoney = (value) => (value == null ? '-' : Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })),
+  formatRate = (value) => (value == null ? '-' : `${Number(value).toFixed(2)}%`)
 }) {
   const totalNominalFcff = projectedCashFlows.reduce(
     (accumulator, yearData) => accumulator + Number(yearData.fcff || 0),
