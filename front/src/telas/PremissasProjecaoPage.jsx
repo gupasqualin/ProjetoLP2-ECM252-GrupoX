@@ -408,14 +408,6 @@ function PremissasProjecaoPage() {
             <button
               type="button"
               className="secondary-btn"
-              onClick={handleRecalculateValuation}
-              disabled={valuationLoading || !assumptionsForm.companyId}
-            >
-              {valuationLoading ? 'Calculando...' : 'Calcular valuation'}
-            </button>
-            <button
-              type="button"
-              className="secondary-btn"
               onClick={resetForm}
               disabled={assumptionsLoading}
             >
