@@ -19,22 +19,25 @@ function ValuationPage({
   );
 
   return (
-    <>
-      <section className="valuation-actions-section">
-        <div className="inline-actions">
-          <button
-            type="button"
-            onClick={handleRecalculateValuation}
-            disabled={valuationLoading}
-          >
-            {valuationLoading ? 'Calculando...' : 'Recalcular valuation'}
-          </button>
+    <section className="company-section">
+      <article className="panel valuation-panel">
+        <div className="valuation-panel-header">
+          <h2>Valuation</h2>
+          <div className="inline-actions">
+            <button
+              type="button"
+              onClick={handleRecalculateValuation}
+              disabled={valuationLoading}
+            >
+              {valuationLoading ? 'Calculando...' : 'Recalcular valuation'}
+            </button>
+          </div>
         </div>
         {valuationError && <p className="feedback error">{valuationError}</p>}
         {valuationSuccess && <p className="feedback success">{valuationSuccess}</p>}
-      </section>
+      </article>
 
-      <section className="table-section">
+      <article className="panel">
         <h2>Fluxo de Caixa Descontado</h2>
         <table>
           <thead>
@@ -97,9 +100,9 @@ function ValuationPage({
             )}
           </tbody>
         </table>
-      </section>
+      </article>
 
-      <section className="valuation-box-wrap">
+      <section className="valuation-grid">
         <article className="panel valuation-box">
           <h3>Caminho do Valuation</h3>
 
@@ -163,7 +166,7 @@ function ValuationPage({
           </article>
         </div>
       </section>
-    </>
+    </section>
   );
 }
 
