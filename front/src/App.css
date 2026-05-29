@@ -350,3 +350,67 @@ th {
   justify-content: flex-start;
   margin-top: 4px;
 }
+
+/* estilos para a tela de Valuation */
+.valuation-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.valuation-panel-header h2 {
+  margin: 0;
+}
+
+.valuation-grid {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 900px) {
+  .valuation-grid {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.valuation-box {
+  display: grid;
+  gap: 8px;
+}
+
+.valuation-box h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: #30343b;
+}
+
+.valuation-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.summary-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.panel.mini h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #30343b;
+}
+
+.panel.mini p {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.mini-main strong {
+  font-size: 16px;
+}
