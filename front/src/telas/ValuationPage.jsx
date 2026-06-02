@@ -155,17 +155,15 @@ function ValuationPage() {
   return (
     <section className="company-section">
       <article className="panel valuation-panel">
-        <div className="valuation-panel-header">
-          <h2>Valuation</h2>
-          <div className="inline-actions">
-            <button
-              type="button"
-              onClick={handleRecalculateValuation}
-              disabled={valuationLoading}
-            >
-              {valuationLoading ? 'Calculando...' : 'Recalcular valuation'}
-            </button>
-          </div>
+        <h2>Valuation</h2>
+        <div className="inline-actions valuation-actions">
+          <button
+            type="button"
+            onClick={handleRecalculateValuation}
+            disabled={valuationLoading}
+          >
+            {valuationLoading ? 'Calculando...' : 'Recalcular valuation'}
+          </button>
         </div>
 
         <div className="company-form">
