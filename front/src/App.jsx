@@ -3,6 +3,7 @@ import GestaoEmpresasPage from './telas/GestaoEmpresasPage';
 import DadosMercadoPage from './telas/DadosMercadoPage';
 import PremissasProjecaoPage from './telas/PremissasProjecaoPage';
 import ValuationPage from './telas/ValuationPage';
+import SensitivityScreen from './telas/SensitivityScreen';
 import './App.css';
 
 function App() {
@@ -41,6 +42,12 @@ function App() {
           >
             Valuation
           </NavLink>
+          <NavLink
+            to="/sensibilidade"
+            className={({ isActive }) => `app-nav-link${isActive ? ' active' : ''}`}
+          >
+            Análise de Sensibilidade
+          </NavLink>
         </nav>
 
         <section className="screen-wrap">
@@ -50,6 +57,7 @@ function App() {
             <Route path="/dados-mercado" element={<DadosMercadoPage />} />
             <Route path="/premissas-projecao" element={<PremissasProjecaoPage />} />
             <Route path="/valuation" element={<ValuationPage />} />
+            <Route path="/sensibilidade" element={<SensitivityScreen />} />
             <Route path="*" element={<Navigate to="/gestao-empresas" replace />} />
           </Routes>
         </section>

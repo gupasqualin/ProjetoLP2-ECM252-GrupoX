@@ -415,3 +415,60 @@ th {
 .mini-main strong {
   font-size: 16px;
 }
+
+/* estilos para a tela de Sensibilidade */
+.sensitivity-section {
+  padding: 12px 0;
+}
+
+.sensitivity-panel {
+  margin-bottom: 20px;
+}
+
+.sensitivity-panel h2 {
+  margin-bottom: 12px;
+  font-size: 16px;
+  color: #30343b;
+}
+
+.sensitivity-panel table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sensitivity-panel th {
+  background: #9cb2d0;
+  color: #0d2f5b;
+  font-weight: 600;
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.sensitivity-panel th:first-child {
+  background: #b8c4d8;
+  text-align: center;
+}
+
+.sensitivity-panel td {
+  padding: 10px 8px;
+  text-align: right;
+  border-bottom: 1px solid #e6e9ee;
+}
+
+.sensitivity-panel td:first-child {
+  text-align: center;
+  font-weight: 600;
+  background: #f8fafc;
+}
+
+.sensitivity-panel td.base-cell {
+  background: #fef9e7;
+  font-weight: 600;
+  color: #1f4f8a;
+}
+
+.sensitivity-panel p {
+  font-size: 13px;
+  color: #6b7280;
+  padding: 12px;
+}
