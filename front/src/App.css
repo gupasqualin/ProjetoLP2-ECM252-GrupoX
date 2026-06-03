@@ -124,6 +124,14 @@ th {
   background: #f8fafc;
 }
 
+.company-form select {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid #cfd4da;
+  background: #f8fafc;
+}
+
 .market-company-field {
   max-width: 420px;
 }
@@ -352,16 +360,9 @@ th {
 }
 
 /* estilos para a tela de Valuation */
-.valuation-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.valuation-panel-header h2 {
-  margin: 0;
+.valuation-actions {
+  justify-content: flex-start;
+  margin-bottom: 10px;
 }
 
 .valuation-grid {

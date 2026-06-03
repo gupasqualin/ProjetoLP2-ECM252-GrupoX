@@ -1,0 +1,15 @@
+{
+  "name": "ms-valuation",
+  "version": "1.0.0",
+  "description": "Microsservico de Valuation (DCF)",
+  "type": "module",
+  "main": "src/server_valuation.js",
+  "scripts": {
+    "start": "node src/server_valuation.js",
+    "dev": "node --watch src/server_valuation.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
