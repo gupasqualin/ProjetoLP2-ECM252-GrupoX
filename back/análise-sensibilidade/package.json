@@ -1,0 +1,15 @@
+{
+  "name": "ms-sensitivity-matrix",
+  "version": "1.0.0",
+  "description": "Microsservico de Matriz de Sensibilidade DCF - DecisionDCF",
+  "type": "module",
+  "main": "src/server_sensitivity-matrix.js",
+  "scripts": {
+    "start": "node src/server_sensitivity-matrix.js",
+    "dev": "node --watch src/server_sensitivity-matrix.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}

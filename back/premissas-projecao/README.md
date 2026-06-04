@@ -34,25 +34,6 @@ O serviço publica eventos no barramento (por padrão `http://localhost:3006`) n
 - `ASSUMPTIONS_UPSERTED` (payload: premissas criadas/atualizadas)
 - `ASSUMPTIONS_DELETED` (companyId)
 
-## Como executar
-
-1. Instale as dependências:
-
-```bash
-npm install
-```
-
-2. Rode o serviço:
-
-```bash
-npm run dev
-```
-
-Por padrão o serviço escuta em `http://localhost:3003` e usa `EVENT_BUS_URL=http://localhost:3006`.
-
-## Exemplo
-
-POST /premissas payload de exemplo:
 
 ```json
 {

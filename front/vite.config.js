@@ -11,6 +11,11 @@ export default defineConfig({
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/api-valuation/, '')
           },
+      '/api-sensitivity': {
+        target: 'http://localhost:3005',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api-sensitivity/, '')
+      },
       '/api-premissas': {
         target: 'http://localhost:3003',
         changeOrigin: true,

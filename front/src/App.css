@@ -418,11 +418,12 @@ th {
 
 /* estilos para a tela de Sensibilidade */
 .sensitivity-section {
-  padding: 12px 0;
+  padding: 14px;
 }
 
 .sensitivity-panel {
   margin-bottom: 20px;
+  padding: 16px 18px;
 }
 
 .sensitivity-panel h2 {
@@ -434,6 +435,7 @@ th {
 .sensitivity-panel table {
   width: 100%;
   border-collapse: collapse;
+  margin: 8px 0 4px;
 }
 
 .sensitivity-panel th {
