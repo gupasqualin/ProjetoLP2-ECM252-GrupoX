@@ -1,0 +1,11 @@
+# Dependencias e artefatos locais
+**/node_modules/
+*.log
+
+# Controle de versao e configuracao local
+.git/
+.env
+
+# Front-end e arquivos sem necessidade na imagem
+../front/
+*.md

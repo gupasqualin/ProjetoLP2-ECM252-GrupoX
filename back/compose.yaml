@@ -1,0 +1,95 @@
+# Nome do projeto: prefixa contêineres e rede criados por este arquivo.
+name: valuation
+
+services:
+  barramento-eventos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: valuation-backend:1.0.0
+    container_name: valuation-barramento-eventos
+    restart: unless-stopped
+    command: ["node", "barramento-eventos/src/server_barramento-eventos.js"]
+    environment:
+      PORT: 3006
+      VALUATION_ENGINE_EVENTS_URL: ${VALUATION_ENGINE_EVENTS_URL}
+    ports:
+      - "${BARRAMENTO_EVENTOS_PORT}:3006"
+    networks:
+      - valuation-net
+
+  gestao-empresas:
+    image: valuation-backend:1.0.0
+    container_name: valuation-gestao-empresas
+    restart: unless-stopped
+    command: ["node", "gestao-empresas/src/server_gestao-empresas.js"]
+    environment:
+      PORT: 3001
+      EVENT_BUS_URL: ${EVENT_BUS_URL}
+    ports:
+      - "${GESTAO_EMPRESAS_PORT}:3001"
+    networks:
+      - valuation-net
+
+  dados-mercado:
+    image: valuation-backend:1.0.0
+    container_name: valuation-dados-mercado
+    restart: unless-stopped
+    command: ["node", "dados-mercado/src/server_dados-mercado.js"]
+    environment:
+      PORT: 3002
+      EVENT_BUS_URL: ${EVENT_BUS_URL}
+    ports:
+      - "${DADOS_MERCADO_PORT}:3002"
+    networks:
+      - valuation-net
+
+  premissas-projecao:
+    image: valuation-backend:1.0.0
+    container_name: valuation-premissas-projecao
+    restart: unless-stopped
+    command: ["node", "premissas-projecao/src/server_premissas-projecao.js"]
+    environment:
+      PORT: 3003
+      EVENT_BUS_URL: ${EVENT_BUS_URL}
+      MARKET_DATA_URL: ${MARKET_DATA_URL}
+      DEFAULT_RISK_FREE_RATE: ${DEFAULT_RISK_FREE_RATE}
+      DEFAULT_MARKET_RISK_PREMIUM: ${DEFAULT_MARKET_RISK_PREMIUM}
+    ports:
+      - "${PREMISSAS_PROJECAO_PORT}:3003"
+    networks:
+      - valuation-net
+
+  valuation:
+    image: valuation-backend:1.0.0
+    container_name: valuation-engine
+    restart: unless-stopped
+    command: ["node", "valuation/src/server_valuation.js"]
+    environment:
+      PORT: 3004
+      COMPANY_SERVICE_URL: ${COMPANY_SERVICE_URL}
+      MARKET_DATA_SERVICE_URL: ${MARKET_DATA_SERVICE_URL}
+      ASSUMPTIONS_SERVICE_URL: ${ASSUMPTIONS_SERVICE_URL}
+      DEFAULT_RISK_FREE_RATE: ${DEFAULT_RISK_FREE_RATE}
+      DEFAULT_MARKET_RISK_PREMIUM: ${DEFAULT_MARKET_RISK_PREMIUM}
+    ports:
+      - "${VALUATION_PORT}:3004"
+    networks:
+      - valuation-net
+
+  análise-sensibilidade:
+    image: valuation-backend:1.0.0
+    container_name: valuation-analise-sensibilidade
+    restart: unless-stopped
+    command: ["node", "análise-sensibilidade/src/server_sensitivity-matrix.js"]
+    environment:
+      PORT: 3005
+      VALUATION_ENGINE_URL: ${VALUATION_ENGINE_URL}
+    ports:
+      - "${ANALISE_SENSIBILIDADE_PORT}:3005"
+    networks:
+      - valuation-net
+
+networks:
+  valuation-net:
+    driver: bridge
