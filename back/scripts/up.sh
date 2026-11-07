@@ -33,7 +33,7 @@ SERVICOS=(
   "dados-mercado:3002"
   "premissas-projecao:3003"
   "valuation:3004"
-  "análise-sensibilidade:3005"
+  "analise-sensibilidade:3005"
   "barramento-eventos:3006"
 )
 
