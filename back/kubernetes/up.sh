@@ -18,7 +18,8 @@ fi
 case "$ACAO" in
   up)
     echo "Aplicando os manifests Kubernetes..."
-    echo "A imagem valuation-backend:1.0.0 deve existir no ambiente do cluster."
+    echo "As imagens valuation-backend:1.0.0 e valuation-gestao-empresas-dart:1.0.0"
+    echo "devem existir no ambiente do cluster (gere com: docker compose build)."
     kubectl apply -f "$MANIFESTO"
     echo
     echo "Recursos criados. Estado atual:"

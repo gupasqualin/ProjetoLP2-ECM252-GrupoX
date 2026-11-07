@@ -18,11 +18,13 @@ services:
     networks:
       - valuation-net
 
+  # Microsservico reimplementado em Dart (imagem propria).
   gestao-empresas:
-    image: valuation-backend:1.0.0
+    build:
+      context: ./gestao-empresas-dart
+    image: valuation-gestao-empresas-dart:1.0.0
     container_name: valuation-gestao-empresas
     restart: unless-stopped
-    command: ["node", "gestao-empresas/src/server_gestao-empresas.js"]
     environment:
       PORT: 3001
       EVENT_BUS_URL: ${EVENT_BUS_URL}
