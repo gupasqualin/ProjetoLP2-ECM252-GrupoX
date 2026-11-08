@@ -46,7 +46,7 @@ function SensitivityScreen() {
     try {
       const response = await axios.post(
         `${SENSITIVITY_API_BASE_URL}/sensitivity/${selectedCompanyId}/matrices`,
-        { syncFromServices: true }
+        {}
       );
       setSensitivityResult(response.data);
     } catch (error) {

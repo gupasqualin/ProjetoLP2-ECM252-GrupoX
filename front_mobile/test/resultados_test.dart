@@ -44,7 +44,7 @@ void main() {
     final requisicoes = <String>[];
     final api = _api((r) {
       requisicoes.add('${r.method} ${r.url.path}');
-      return _json(_dado('valuation_sync.json'));
+      return _json(_dado('valuation.json'));
     });
 
     await _mostrar(tester, DetalheValuation(api: api, empresa: _petrobras));
@@ -53,7 +53,7 @@ void main() {
     await tester.tap(find.text('Calcular valuation'));
     await tester.pumpAndSettle();
 
-    expect(requisicoes, ['POST /valuation/1/sync-from-services']);
+    expect(requisicoes, ['POST /valuation/1/recalculate']);
     expect(find.text(formatarMoeda(117.76)), findsOneWidget);
     expect(find.text('Preço atual ${formatarMoeda(38.5)}'), findsOneWidget);
     expect(find.text('+205,86% de potencial'), findsOneWidget);
@@ -67,9 +67,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     final valuation =
-        (jsonDecode(_dado('valuation_sync.json'))
-                as Map<String, dynamic>)['valuation']
-            as Map<String, dynamic>;
+        jsonDecode(_dado('valuation.json')) as Map<String, dynamic>;
     final api = _api((_) => _json(_dado('sensibilidade.json')));
 
     for (final tela in [

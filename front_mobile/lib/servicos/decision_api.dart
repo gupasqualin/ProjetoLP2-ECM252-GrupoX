@@ -102,14 +102,12 @@ class DecisionApi {
   Future<Map<int, Map<String, dynamic>>> listarValuations() async =>
       _porEmpresa(await _cliente.get(ApiConfig.valuation('/valuations')));
 
-  /// Busca os dados atuais nos outros microsserviços e recalcula o valuation.
-  Future<Map<String, dynamic>> calcularValuation(int companyId) async {
-    final resposta = await _cliente.post(
-      ApiConfig.valuation('/valuation/$companyId/sync-from-services'),
-    );
-    return (resposta as Map<String, dynamic>)['valuation']
-        as Map<String, dynamic>;
-  }
+  /// Calcula o valuation com os dados que o microsserviço de valuation já
+  /// recebeu pelos eventos (ele não consulta os outros microsserviços).
+  Future<Map<String, dynamic>> calcularValuation(int companyId) async =>
+      await _cliente.post(
+        ApiConfig.valuation('/valuation/$companyId/recalculate'),
+      ) as Map<String, dynamic>;
 
   // ---------- Análise de Sensibilidade (porta 3005) ----------
 
