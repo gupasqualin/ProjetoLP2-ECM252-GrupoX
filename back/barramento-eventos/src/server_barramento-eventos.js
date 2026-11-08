@@ -3,8 +3,6 @@ import cors from 'cors';
 
 const app = express();
 const PORT = process.env.PORT || 3006;
-const VALUATION_ENGINE_EVENTS_URL =
-  process.env.VALUATION_ENGINE_EVENTS_URL || 'http://localhost:3004/events';
 
 const EVENT_TYPES = [
   'COMPANY_UPSERTED',
@@ -16,10 +14,16 @@ const EVENT_TYPES = [
   'VALUATION_RECALCULATE_REQUESTED'
 ];
 
+// Cada microsservico se registra sozinho (POST /subscribe) quando sobe.
 const subscribersByEventType = EVENT_TYPES.reduce((accumulator, eventType) => {
-  accumulator[eventType] = new Set([VALUATION_ENGINE_EVENTS_URL]);
+  accumulator[eventType] = new Set();
   return accumulator;
 }, {});
+
+// Historico de todos os eventos publicados. Um microsservico que estava fora
+// do ar recupera o que perdeu com GET /events?after=<ultimo id que recebeu>.
+const eventLog = [];
+let nextEventId = 1;
 
 app.use(cors());
 app.use(express.json());
@@ -59,8 +63,27 @@ app.get('/health', (req, res) => {
   res.status(200).json({
     service: 'ms-barramento-eventos',
     status: 'ok',
+    storedEvents: eventLog.length,
     subscribers: serializeSubscribers()
   });
+});
+
+app.get('/events', (req, res) => {
+  const after = Number(req.query.after ?? 0);
+  if (!Number.isInteger(after) || after < 0) {
+    return res.status(400).json({ message: 'after deve ser um inteiro maior ou igual a 0.' });
+  }
+
+  const typesFilter = String(req.query.types || '')
+    .split(',')
+    .map(normalizeEventType)
+    .filter(Boolean);
+
+  const events = eventLog.filter(
+    (event) => event.id > after && (typesFilter.length === 0 || typesFilter.includes(event.eventType))
+  );
+
+  return res.status(200).json({ lastEventId: nextEventId - 1, events });
 });
 
 app.get('/subscribers', (req, res) => {
@@ -146,7 +169,8 @@ app.post('/publish', async (req, res) => {
     });
   }
 
-  const eventPayload = { eventType };
+  const eventPayload = { id: nextEventId, eventType };
+  nextEventId += 1;
 
   if (req.body?.payload !== undefined) {
     eventPayload.payload = req.body.payload;
@@ -155,6 +179,9 @@ app.post('/publish', async (req, res) => {
   if (req.body?.companyId !== undefined) {
     eventPayload.companyId = req.body.companyId;
   }
+
+  eventPayload.publishedAt = new Date().toISOString();
+  eventLog.push(eventPayload);
 
   const subscribers = Array.from(subscribersByEventType[eventType]);
   const failures = [];
@@ -203,6 +230,7 @@ app.post('/publish', async (req, res) => {
   );
 
   return res.status(200).json({
+    eventId: eventPayload.id,
     eventType,
     totalSubscribers: subscribers.length,
     notifiedCount,
@@ -213,7 +241,4 @@ app.post('/publish', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Microsservico Barramento de Eventos ativo na porta ${PORT}`);
-  console.log(
-    `[barramento-eventos] Subscriber padrao registrado para todos os eventos: ${VALUATION_ENGINE_EVENTS_URL}`
-  );
 });
