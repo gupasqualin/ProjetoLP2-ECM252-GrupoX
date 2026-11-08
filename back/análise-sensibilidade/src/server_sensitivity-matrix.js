@@ -126,15 +126,24 @@ function calculateFairValue(params) {
     depreciationRate,
     discountRate,
     perpetualGrowthRate,
+    terminalValueMethod,
+    exitMultiple,
     netDebt,
     sharesOutstanding
   } = params;
+
+  const usaMultiploDeSaida = terminalValueMethod === 'EXIT_MULTIPLE';
 
   if (!Number.isFinite(discountRate) || !Number.isFinite(perpetualGrowthRate)) {
     return { enterpriseValue: null, equityValue: null, fairValuePerShare: null };
   }
 
-  if (discountRate <= perpetualGrowthRate) {
+  // A restricao WACC > g so existe no metodo de Gordon.
+  if (!usaMultiploDeSaida && discountRate <= perpetualGrowthRate) {
+    return { enterpriseValue: null, equityValue: null, fairValuePerShare: null };
+  }
+
+  if (usaMultiploDeSaida && !(Number.isFinite(exitMultiple) && exitMultiple > 0)) {
     return { enterpriseValue: null, equityValue: null, fairValuePerShare: null };
   }
 
@@ -149,6 +158,7 @@ function calculateFairValue(params) {
   let previousRevenue = baseRevenue;
   let discountedCashFlows = 0;
   let lastYearFcff = null;
+  let lastYearEbitda = null;
 
   for (let index = 0; index < projectionYears; index += 1) {
     const year = index + 1;
@@ -169,6 +179,7 @@ function calculateFairValue(params) {
 
     discountedCashFlows += presentValueFcff;
     lastYearFcff = fcff;
+    lastYearEbitda = ebitda;
     previousRevenue = revenue;
   }
 
@@ -176,8 +187,10 @@ function calculateFairValue(params) {
     return { enterpriseValue: null, equityValue: null, fairValuePerShare: null };
   }
 
-  const nextYearFcff = lastYearFcff * (1 + perpetualGrowthRate);
-  const terminalValue = nextYearFcff / (discountRate - perpetualGrowthRate);
+  // Mesmo calculo do ms-valuation: Gordon ou EBITDA do ultimo ano x multiplo.
+  const terminalValue = usaMultiploDeSaida
+    ? lastYearEbitda * exitMultiple
+    : (lastYearFcff * (1 + perpetualGrowthRate)) / (discountRate - perpetualGrowthRate);
   const presentValueTerminalValue = terminalValue / ((1 + discountRate) ** projectionYears);
 
   const enterpriseValue = discountedCashFlows + presentValueTerminalValue;
@@ -397,6 +410,8 @@ app.post('/sensitivity/:companyId/matrices', async (req, res) => {
     const baseWacc = Number(assumptions.discountRate);
     const baseG = Number(assumptions.perpetualGrowthRate);
     const baseEbitdaMargin = Number(assumptions.projectedEbitdaMargin);
+    const terminalValueMethod = String(assumptions.terminalValueMethod || 'GORDON').toUpperCase();
+    const exitMultiple = Number(assumptions.exitMultiple);
 
     const commonInputs = {
       baseRevenue: Number(marketData.revenue),
@@ -411,6 +426,8 @@ app.post('/sensitivity/:companyId/matrices', async (req, res) => {
         : 0,
       discountRate: baseWacc,
       perpetualGrowthRate: baseG,
+      terminalValueMethod,
+      exitMultiple,
       netDebt: Number(marketData.netDebt),
       sharesOutstanding: Number(marketData.sharesOutstanding)
     };
@@ -423,7 +440,9 @@ app.post('/sensitivity/:companyId/matrices', async (req, res) => {
       baseAssumptions: {
         discountRate: baseWacc,
         perpetualGrowthRate: baseG,
-        projectedEbitdaMargin: baseEbitdaMargin
+        projectedEbitdaMargin: baseEbitdaMargin,
+        terminalValueMethod,
+        exitMultiple: terminalValueMethod === 'EXIT_MULTIPLE' ? exitMultiple : null
       },
       baseFairValuePerShare: baseScenario.fairValuePerShare,
       stepsUsed: {
