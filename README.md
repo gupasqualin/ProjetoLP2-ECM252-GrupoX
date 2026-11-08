@@ -24,11 +24,76 @@ A aplicação calcula o valor intrínseco de uma empresa pelo método do Fluxo d
 
 O DecisionDCF é voltado para investidores e analistas, mas também serve para quem está começando e quer entender como o valuation funciona na prática.
 
-**UPDATE:** Segundo semestre - Versão mobile Flutter
+## Agora no celular
+
+No segundo semestre, o DecisionDCF ganhou um **app mobile em Flutter**: toda a análise, do cadastro da empresa até os cenários, cabe no bolso.
+
+| Aba | O que você faz nela |
+|---|---|
+| **Empresas** | Cadastra, lista e remove empresas, e pede o recálculo do valuation |
+| **Mercado** | Informa os dados de mercado e do balanço (preço da ação, dívida, receita, EBITDA...) |
+| **Premissas** | Define o crescimento da receita ano a ano, margens, valor terminal (Gordon ou múltiplo de saída) e vê o WACC calculado |
+| **Valuation** | Vê o preço justo da ação, o potencial de valorização e o fluxo de caixa projetado |
+| **Cenários** | Vê como o preço justo muda variando WACC, crescimento perpétuo e margem EBITDA |
+
+## Arquitetura
+
+O back-end é formado por microsserviços que conversam por um barramento de eventos. Os front-ends acessam os microsserviços por requisições HTTP.
+
+| Microsserviço | Pasta | Porta | Linguagem |
+|---|---|---|---|
+| Gestão de Empresas | `back/gestao-empresas-dart` | 3001 | **Dart** |
+| Dados de Mercado | `back/dados-mercado` | 3002 | Node.js |
+| Premissas de Projeção | `back/premissas-projecao` | 3003 | Node.js |
+| Valuation | `back/valuation` | 3004 | Node.js |
+| Análise de Sensibilidade | `back/análise-sensibilidade` | 3005 | Node.js |
+| Barramento de Eventos | `back/barramento-eventos` | 3006 | Node.js |
+
+- `front/`: front-end web em React (parte 1).
+- `front_mobile/`: app mobile em Flutter (parte 2).
+- `back/gestao-empresas`: versão original em Node.js do microsserviço de Gestão de Empresas, mantida como referência da reimplementação em Dart.
+
+## Como executar
+
+### Back-end com Docker
+
+Dentro da pasta `back`:
+
+```bash
+cp .env.example .env
+./scripts/up.sh --rebuild
+```
+
+O script constrói as imagens, sobe os 6 microsserviços e espera todos responderem em `/health`. Para desligar: `docker compose down`.
+
+### Back-end com Kubernetes
+
+Dentro da pasta `back`, com um cluster Kubernetes ativo (por exemplo, o do Docker Desktop):
+
+```bash
+docker compose build
+./kubernetes/up.sh up
+```
+
+Também existem `./kubernetes/up.sh status` (mostra os pods) e `./kubernetes/up.sh down` (remove tudo). Os serviços ficam expostos nas portas 30001 a 30006.
+
+### App mobile (Flutter)
+
+Dentro da pasta `front_mobile`, com o back-end rodando:
+
+| Onde rodar | Comando |
+|---|---|
+| Emulador Android | `flutter run` |
+| Navegador | `flutter run -d chrome` |
+| Celular de verdade (mesma rede Wi-Fi) | `flutter run --dart-define=API_HOST=<IP do computador>` |
+| Back-end no Kubernetes | acrescente `--dart-define=API_PORTA_BASE=30000` |
+
+Testes automatizados: `flutter test`.
 
 ## Integrantes
 
 | RA | Nome |
+|---|---|
 | 23.00209-3 | Enzo Medeiros Grando |
 | 23.00438-0 | Gustavo Henrique Lamberti Widonsck |
 | 23.00531-9 | Gustavo Henrique Rivero Pasqualin |
