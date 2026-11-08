@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'servicos/decision_api.dart';
+import 'telas/dados_mercado_tela.dart';
 import 'telas/empresas_tela.dart';
+import 'telas/premissas_tela.dart';
 
 void main() {
   runApp(DecisionDcfApp(api: DecisionApi()));
@@ -50,24 +52,43 @@ class _InicioTelaState extends State<InicioTela> {
 
   @override
   Widget build(BuildContext context) {
+    final api = widget.api;
     // Cada aba é recriada ao ser aberta, para sempre mostrar dados atualizados.
-    final telas = <Widget>[EmpresasTela(api: widget.api)];
+    final abas = <(String, IconData, IconData, Widget Function())>[
+      (
+        'Empresas',
+        Icons.business_outlined,
+        Icons.business,
+        () => EmpresasTela(api: api),
+      ),
+      (
+        'Mercado',
+        Icons.show_chart_outlined,
+        Icons.show_chart,
+        () => DadosMercadoTela(api: api),
+      ),
+      (
+        'Premissas',
+        Icons.tune_outlined,
+        Icons.tune,
+        () => PremissasTela(api: api),
+      ),
+    ];
 
     return Scaffold(
-      body: telas[_aba],
-      bottomNavigationBar: telas.length < 2
-          ? null
-          : NavigationBar(
-              selectedIndex: _aba,
-              onDestinationSelected: (aba) => setState(() => _aba = aba),
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.business_outlined),
-                  selectedIcon: Icon(Icons.business),
-                  label: 'Empresas',
-                ),
-              ],
+      body: KeyedSubtree(key: ValueKey(_aba), child: abas[_aba].$4()),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _aba,
+        onDestinationSelected: (aba) => setState(() => _aba = aba),
+        destinations: [
+          for (final (rotulo, icone, iconeSelecionado, _) in abas)
+            NavigationDestination(
+              icon: Icon(icone),
+              selectedIcon: Icon(iconeSelecionado),
+              label: rotulo,
             ),
+        ],
+      ),
     );
   }
 }
