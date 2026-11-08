@@ -1,24 +1,24 @@
 import express from 'express';
 import cors from 'cors';
 
-import {
-  PORT,
-  COMPANY_SERVICE_URL,
-  MARKET_DATA_SERVICE_URL,
-  ASSUMPTIONS_SERVICE_URL
-} from './config.js';
+import { PORT, EVENT_BUS_URL, EVENTS_URL } from './config.js';
 import { applyEvent, EVENT_TYPES } from './events.js';
-import { fetchJsonOrFail } from './http.js';
-import { buildStateSnapshot, ensureCompanyStub, state } from './state.js';
-import {
-  parseCompanyId,
-  validateAssumptions,
-  validateCompany,
-  validateMarketData
-} from './validacao.js';
+import { criarAssinatura } from './assinatura-eventos.js';
+import { buildStateSnapshot, state } from './state.js';
+import { parseCompanyId } from './validacao.js';
 import { calculateValuation } from './calculos.js';
 
 const app = express();
+
+// Os dados de empresas, mercado e premissas chegam so pelos eventos do
+// barramento; este servico nunca chama outro microsservico diretamente.
+const assinatura = criarAssinatura({
+  nome: 'valuation',
+  eventBusUrl: EVENT_BUS_URL,
+  urlDeEventos: EVENTS_URL,
+  tipos: EVENT_TYPES,
+  aplicar: applyEvent
+});
 
 app.use(cors());
 app.use(express.json());
@@ -48,7 +48,7 @@ app.post('/events', (req, res) => {
 
   const applied = [];
   for (let index = 0; index < events.length; index += 1) {
-    const result = applyEvent(events[index]);
+    const result = assinatura.receber(events[index]);
     if (result.error) {
       return res.status(400).json({
         message: result.error,
@@ -80,7 +80,7 @@ app.get('/valuation/:companyId', (req, res) => {
   const cached = state.valuationsByCompany[companyIdResult.value];
   if (!cached) {
     return res.status(404).json({
-      message: 'Valuation ainda nao calculado para esta empresa. Use /valuation/:companyId/recalculate ou /valuation/:companyId/sync-from-services.'
+      message: 'Valuation ainda nao calculado para esta empresa. Use POST /valuation/:companyId/recalculate.'
     });
   }
 
@@ -129,69 +129,7 @@ app.post('/valuation/recalculate-all', (req, res) => {
   });
 });
 
-app.post('/valuation/:companyId/sync-from-services', async (req, res) => {
-  const companyIdResult = parseCompanyId(req.params.companyId);
-  if (companyIdResult.error) {
-    return res.status(400).json({ message: companyIdResult.error });
-  }
-
-  const companyId = companyIdResult.value;
-
-  try {
-    const [marketData, assumptions] = await Promise.all([
-      fetchJsonOrFail(`${MARKET_DATA_SERVICE_URL}/market-data/${companyId}`, 'ms-market-data'),
-      fetchJsonOrFail(`${ASSUMPTIONS_SERVICE_URL}/premissas/${companyId}`, 'ms-premissas-projecao')
-    ]);
-
-    const marketDataNormalized = validateMarketData(marketData, { forcedCompanyId: companyId });
-    if (marketDataNormalized.error) {
-      return res.status(400).json({ message: marketDataNormalized.error });
-    }
-
-    const assumptionsNormalized = validateAssumptions(assumptions, { forcedCompanyId: companyId });
-    if (assumptionsNormalized.error) {
-      return res.status(400).json({ message: assumptionsNormalized.error });
-    }
-
-    state.marketDataByCompany[companyId] = marketDataNormalized.value;
-    state.assumptionsByCompany[companyId] = assumptionsNormalized.value;
-
-    try {
-      const companies = await fetchJsonOrFail(`${COMPANY_SERVICE_URL}/empresas`, 'ms-gestao-empresas');
-      const company = Array.isArray(companies)
-        ? companies.find((entry) => Number(entry.id) === companyId)
-        : null;
-
-      if (company) {
-        const companyNormalized = validateCompany(company);
-        if (!companyNormalized.error) {
-          state.companiesById[companyId] = companyNormalized.value;
-        } else {
-          ensureCompanyStub(companyId);
-        }
-      } else {
-        ensureCompanyStub(companyId);
-      }
-    } catch {
-      ensureCompanyStub(companyId);
-    }
-
-    const valuation = calculateValuation(companyId);
-    if (valuation.error) {
-      return res.status(400).json({ message: valuation.error });
-    }
-
-    return res.status(200).json({
-      message: 'Sincronizacao concluida e valuation calculado com sucesso.',
-      valuation: valuation.value
-    });
-  } catch (error) {
-    return res.status(502).json({
-      message: `Falha ao sincronizar dados com os outros microsservicos: ${error.message}`
-    });
-  }
-});
-
 app.listen(PORT, () => {
   console.log(`Microsservico Valuation ativo na porta ${PORT}`);
+  assinatura.iniciar();
 });

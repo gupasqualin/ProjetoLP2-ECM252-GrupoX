@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:gestao_empresas/gestao_empresas.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
 
@@ -124,5 +126,51 @@ void main() {
     final response = await enviar('OPTIONS', '/empresas');
     expect(response.statusCode, 204);
     expect(response.headers['access-control-allow-origin'], '*');
+  });
+
+  group('FilaDeEventos', () {
+    test(
+        'guarda os eventos com o barramento fora do ar e envia na ordem quando ele volta',
+        () async {
+      var barramentoNoAr = false;
+      final recebidos = <String>[];
+      final fila = FilaDeEventos(
+        'http://barramento:3006',
+        intervalo: const Duration(hours: 1), // reenvio manual no teste
+        cliente: MockClient((requisicao) async {
+          if (!barramentoNoAr) {
+            throw http.ClientException('Connection refused', requisicao.url);
+          }
+          final corpo = jsonDecode(requisicao.body) as Map<String, dynamic>;
+          recebidos.add('${corpo['eventType']}:${corpo['companyId']}');
+          return http.Response('{}', 200);
+        }),
+      );
+      addTearDown(fila.fechar);
+
+      fila.publicar('COMPANY_DELETED', {'companyId': 1});
+      fila.publicar('COMPANY_DELETED', {'companyId': 2});
+      await fila.enviarPendentes();
+      expect(fila.pendentes, 2);
+      expect(recebidos, isEmpty);
+
+      barramentoNoAr = true;
+      await fila.enviarPendentes();
+      expect(fila.pendentes, 0);
+      expect(recebidos, ['COMPANY_DELETED:1', 'COMPANY_DELETED:2']);
+    });
+
+    test('descarta evento recusado pelo barramento (erro 4xx)', () async {
+      final fila = FilaDeEventos(
+        'http://barramento:3006',
+        intervalo: const Duration(hours: 1),
+        cliente: MockClient((_) async => http.Response('{}', 400)),
+      );
+      addTearDown(fila.fechar);
+
+      fila.publicar('EVENTO_INVALIDO', {});
+      await fila.enviarPendentes();
+      expect(fila.pendentes, 0);
+    });
   });
 }

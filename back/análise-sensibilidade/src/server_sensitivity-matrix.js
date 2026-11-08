@@ -1,9 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 
+import { criarAssinatura } from './assinatura-eventos.js';
+
 const app = express();
 const PORT = process.env.PORT || 3005;
-const VALUATION_ENGINE_URL = process.env.VALUATION_ENGINE_URL || 'http://localhost:3004';
+const EVENT_BUS_URL = process.env.EVENT_BUS_URL || 'http://localhost:3006';
+// Endereco em que o barramento entrega os eventos para este servico.
+const EVENTS_URL = process.env.EVENTS_URL || `http://localhost:${PORT}/events`;
 
 const DEFAULT_WACC_STEPS = [-0.02, -0.01, 0, 0.01, 0.02];
 const DEFAULT_G_STEPS = [-0.01, -0.005, 0, 0.005, 0.01];
@@ -45,73 +49,74 @@ function normalizeSteps(rawSteps, defaultSteps, fieldName) {
   return { value: parsedSteps };
 }
 
-function parseBoolean(value, defaultValue) {
-  if (value === undefined) {
-    return defaultValue;
-  }
-
-  if (typeof value === 'boolean') {
-    return value;
-  }
-
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase();
-    if (normalized === 'true') {
-      return true;
-    }
-    if (normalized === 'false') {
-      return false;
-    }
-  }
-
-  return defaultValue;
-}
-
 function roundToTwo(value) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
-async function fetchJsonOrFail(url, sourceName, options = {}) {
-  if (typeof fetch !== 'function') {
-    throw new Error('Runtime sem suporte a fetch. Use Node.js 18+ para este microsservico.');
+// Copia local de empresas, dados de mercado e premissas, recebida pelos
+// eventos do barramento. Assim os cenarios sao calculados aqui mesmo, sem
+// chamar o ms-valuation nem nenhum outro microsservico.
+const companiesById = {};
+const marketDataByCompany = {};
+const assumptionsByCompany = {};
+
+const CONSUMED_EVENT_TYPES = [
+  'COMPANY_UPSERTED',
+  'COMPANY_DELETED',
+  'MARKET_DATA_UPSERTED',
+  'MARKET_DATA_DELETED',
+  'ASSUMPTIONS_UPSERTED',
+  'ASSUMPTIONS_DELETED'
+];
+
+function applyEvent(event) {
+  const eventType = String(event?.eventType || '').trim().toUpperCase();
+  const payload = event?.payload;
+
+  const upserts = {
+    COMPANY_UPSERTED: [companiesById, payload?.id],
+    MARKET_DATA_UPSERTED: [marketDataByCompany, payload?.companyId],
+    ASSUMPTIONS_UPSERTED: [assumptionsByCompany, payload?.companyId]
+  };
+  if (upserts[eventType]) {
+    const [destino, rawId] = upserts[eventType];
+    const idResult = parseCompanyId(rawId);
+    if (idResult.error) return { error: idResult.error };
+    destino[idResult.value] = payload;
+    return { value: { eventType, companyId: idResult.value } };
   }
 
-  const response = await fetch(url, options);
-  let responseBody = null;
-
-  try {
-    responseBody = await response.json();
-  } catch {
-    responseBody = null;
+  const deletes = {
+    COMPANY_DELETED: [companiesById, marketDataByCompany, assumptionsByCompany],
+    MARKET_DATA_DELETED: [marketDataByCompany],
+    ASSUMPTIONS_DELETED: [assumptionsByCompany]
+  };
+  if (deletes[eventType]) {
+    const idResult = parseCompanyId(event.companyId);
+    if (idResult.error) return { error: idResult.error };
+    for (const mapa of deletes[eventType]) {
+      delete mapa[idResult.value];
+    }
+    return { value: { eventType, companyId: idResult.value } };
   }
 
-  if (!response.ok) {
-    const serviceMessage = responseBody?.message || `${sourceName} retornou status ${response.status}.`;
-    throw new Error(serviceMessage);
-  }
-
-  return responseBody;
+  return { value: { eventType, ignorado: true } };
 }
 
-async function loadBaseValuation(companyId, syncFromServices) {
-  if (syncFromServices) {
-    const syncResponse = await fetchJsonOrFail(
-      `${VALUATION_ENGINE_URL}/valuation/${companyId}/sync-from-services`,
-      'ms-valuation',
-      { method: 'POST', headers: { 'Content-Type': 'application/json' } }
-    );
+const assinatura = criarAssinatura({
+  nome: 'analise-sensibilidade',
+  eventBusUrl: EVENT_BUS_URL,
+  urlDeEventos: EVENTS_URL,
+  tipos: CONSUMED_EVENT_TYPES,
+  aplicar: applyEvent
+});
 
-    if (!syncResponse?.valuation) {
-      throw new Error('Resposta invalida de sync-from-services no ms-valuation.');
-    }
-
-    return syncResponse.valuation;
-  }
-
-  return fetchJsonOrFail(
-    `${VALUATION_ENGINE_URL}/valuation/${companyId}`,
-    'ms-valuation'
-  );
+function loadBaseValuation(companyId) {
+  return {
+    company: companiesById[companyId] || null,
+    marketData: marketDataByCompany[companyId] || null,
+    assumptions: assumptionsByCompany[companyId] || null
+  };
 }
 
 function calculateFairValue(params) {
@@ -395,10 +400,14 @@ app.post('/sensitivity/:companyId/matrices', async (req, res) => {
     return res.status(400).json({ message: ebitdaMarginStepsResult.error });
   }
 
-  const syncFromServices = parseBoolean(req.body?.syncFromServices, true);
-
   try {
-    const baseValuation = await loadBaseValuation(companyIdResult.value, syncFromServices);
+    const baseValuation = loadBaseValuation(companyIdResult.value);
+    if (!baseValuation.marketData || !baseValuation.assumptions) {
+      return res.status(422).json({
+        message: 'Cadastre os dados de mercado e as premissas desta empresa antes de gerar os cenarios.'
+      });
+    }
+
     const baseCheck = validateBaseInputs(baseValuation);
     if (baseCheck.error) {
       return res.status(400).json({ message: baseCheck.error });
@@ -475,19 +484,30 @@ app.post('/sensitivity/:companyId/matrices', async (req, res) => {
       },
       calculatedAt: nowIso(),
       source: {
-        valuationEngineUrl: VALUATION_ENGINE_URL,
-        syncFromServices
+        origem: 'copia local recebida pelos eventos do barramento',
+        ultimoEventoAplicado: assinatura.ultimoEventoAplicado()
       }
     };
 
     return res.status(200).json(response);
   } catch (error) {
-    return res.status(502).json({
-      message: error?.message || 'Falha ao obter dados do ms-valuation.'
+    return res.status(500).json({
+      message: error?.message || 'Falha ao calcular os cenarios.'
     });
   }
 });
 
+app.post('/events', (req, res) => {
+  const events = Array.isArray(req.body) ? req.body : [req.body];
+  const results = events.map((event) => assinatura.receber(event));
+  const failed = results.find((result) => result?.error);
+  if (failed) {
+    return res.status(400).json({ message: failed.error });
+  }
+  return res.status(202).json({ message: 'Eventos processados.', results });
+});
+
 app.listen(PORT, () => {
   console.log(`Microsservico Sensitivity Matrix ativo na porta ${PORT}`);
+  assinatura.iniciar();
 });

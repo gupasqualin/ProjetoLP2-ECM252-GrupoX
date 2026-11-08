@@ -125,8 +125,12 @@ function calculateValuation(companyId) {
   const marketData = state.marketDataByCompany[companyId];
   const assumptions = state.assumptionsByCompany[companyId];
 
-  if (!marketData) return { error: 'Market Data nao encontrado para esta empresa.' };
-  if (!assumptions) return { error: 'Premissas de projecao nao encontradas para esta empresa.' };
+  if (!marketData) {
+    return { error: 'Cadastre os dados de mercado desta empresa antes de calcular o valuation.' };
+  }
+  if (!assumptions) {
+    return { error: 'Cadastre as premissas desta empresa antes de calcular o valuation.' };
+  }
 
   // 1) Taxas usadas para descontar os fluxos.
   const {

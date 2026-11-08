@@ -5,15 +5,44 @@ const app = express();
 const PORT = process.env.PORT || 3002;
 const EVENT_BUS_URL = process.env.EVENT_BUS_URL || 'http://localhost:3006';
 
+// Fila de saida de eventos: se o barramento estiver fora do ar, os eventos
+// esperam aqui e sao enviados, na ordem em que aconteceram, quando ele voltar.
+const pendingEvents = [];
+let sendingEvents = false;
+
 function publishEvent(eventType, data = {}) {
-  fetch(`${EVENT_BUS_URL}/publish`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ eventType, ...data })
-  }).catch((error) => {
-    console.warn(`[event-bus] Falha ao publicar ${eventType}:`, error.message);
-  });
+  pendingEvents.push({ eventType, ...data });
+  flushPendingEvents();
 }
+
+async function flushPendingEvents() {
+  if (sendingEvents) return;
+  sendingEvents = true;
+  try {
+    while (pendingEvents.length > 0) {
+      const response = await fetch(`${EVENT_BUS_URL}/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pendingEvents[0])
+      });
+      if (response.status >= 400 && response.status < 500) {
+        // Evento recusado pelo barramento: tentar de novo nao adianta.
+        console.warn(`[event-bus] Evento ${pendingEvents[0].eventType} recusado (HTTP ${response.status}).`);
+      } else if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      pendingEvents.shift();
+    }
+  } catch (error) {
+    console.warn(
+      `[event-bus] Barramento indisponivel (${error.message}); ${pendingEvents.length} evento(s) aguardando na fila.`
+    );
+  } finally {
+    sendingEvents = false;
+  }
+}
+
+setInterval(flushPendingEvents, 3000);
 
 app.use(cors());
 app.use(express.json());

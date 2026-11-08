@@ -34,6 +34,19 @@ O serviço publica eventos no barramento (por padrão `http://localhost:3006`) n
 - `ASSUMPTIONS_UPSERTED` (payload: premissas criadas/atualizadas)
 - `ASSUMPTIONS_DELETED` (companyId)
 
+Se o barramento estiver fora do ar, os eventos ficam numa fila e são enviados, na ordem, quando ele voltar.
+
+## Eventos consumidos
+
+Para calcular o WACC sem depender do ms-dados-mercado, o serviço guarda uma cópia local dos dados de mercado, recebida pelo barramento:
+
+- `MARKET_DATA_UPSERTED` e `MARKET_DATA_DELETED` (dados usados no WACC)
+- `COMPANY_DELETED` (remove os dados da empresa)
+
+Ao subir, o serviço se registra no barramento e recupera os eventos que perdeu; a cada 10 segundos ele repete isso.
+
+Variáveis de ambiente: `EVENT_BUS_URL` (barramento) e `EVENTS_URL` (endereço em que o barramento entrega os eventos para este serviço).
+
 
 ```json
 {
@@ -51,5 +64,5 @@ O serviço publica eventos no barramento (por padrão `http://localhost:3006`) n
 }
 ```
 
-O backend busca os dados de mercado da empresa, calcula o custo de capital próprio via CAPM, combina dívida e patrimônio para obter o WACC e salva esse valor em `discountRate` por compatibilidade com o restante do fluxo.
+O backend usa a cópia local dos dados de mercado da empresa (recebida pelos eventos), calcula o custo de capital próprio via CAPM, combina dívida e patrimônio para obter o WACC e salva esse valor em `discountRate` por compatibilidade com o restante do fluxo.
 

@@ -32,8 +32,6 @@ spec:
           env:
             - name: PORT
               value: "3006"
-            - name: VALUATION_ENGINE_EVENTS_URL
-              value: http://valuation:3004/events
 ---
 apiVersion: v1
 kind: Service
@@ -160,8 +158,8 @@ spec:
               value: "3003"
             - name: EVENT_BUS_URL
               value: http://barramento-eventos:3006
-            - name: MARKET_DATA_URL
-              value: http://dados-mercado:3002
+            - name: EVENTS_URL
+              value: http://premissas-projecao:3003/events
             - name: DEFAULT_RISK_FREE_RATE
               value: "0.045"
             - name: DEFAULT_MARKET_RISK_PREMIUM
@@ -206,12 +204,10 @@ spec:
           env:
             - name: PORT
               value: "3004"
-            - name: COMPANY_SERVICE_URL
-              value: http://gestao-empresas:3001
-            - name: MARKET_DATA_SERVICE_URL
-              value: http://dados-mercado:3002
-            - name: ASSUMPTIONS_SERVICE_URL
-              value: http://premissas-projecao:3003
+            - name: EVENT_BUS_URL
+              value: http://barramento-eventos:3006
+            - name: EVENTS_URL
+              value: http://valuation:3004/events
             - name: DEFAULT_RISK_FREE_RATE
               value: "0.045"
             - name: DEFAULT_MARKET_RISK_PREMIUM
@@ -256,8 +252,10 @@ spec:
           env:
             - name: PORT
               value: "3005"
-            - name: VALUATION_ENGINE_URL
-              value: http://valuation:3004
+            - name: EVENT_BUS_URL
+              value: http://barramento-eventos:3006
+            - name: EVENTS_URL
+              value: http://analise-sensibilidade:3005/events
 ---
 apiVersion: v1
 kind: Service

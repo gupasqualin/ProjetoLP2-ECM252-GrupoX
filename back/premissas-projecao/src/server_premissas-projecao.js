@@ -1,10 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 
+import { criarAssinatura } from './assinatura-eventos.js';
+
 const app = express();
 const PORT = process.env.PORT || 3003;
 const EVENT_BUS_URL = process.env.EVENT_BUS_URL || 'http://localhost:3006';
-const MARKET_DATA_URL = process.env.MARKET_DATA_URL || 'http://localhost:3002';
+// Endereco em que o barramento entrega os eventos para este servico.
+const EVENTS_URL = process.env.EVENTS_URL || `http://localhost:${PORT}/events`;
 
 const DEFAULT_RISK_FREE_RATE = sanitizeRate(process.env.DEFAULT_RISK_FREE_RATE, 0.045);
 const DEFAULT_MARKET_RISK_PREMIUM = sanitizeRate(process.env.DEFAULT_MARKET_RISK_PREMIUM, 0.055);
@@ -14,15 +17,44 @@ function sanitizeRate(value, fallback) {
   return Number.isFinite(numberValue) && numberValue >= 0 && numberValue < 1 ? numberValue : fallback;
 }
 
+// Fila de saida de eventos: se o barramento estiver fora do ar, os eventos
+// esperam aqui e sao enviados, na ordem em que aconteceram, quando ele voltar.
+const pendingEvents = [];
+let sendingEvents = false;
+
 function publishEvent(eventType, data = {}) {
-  fetch(`${EVENT_BUS_URL}/publish`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ eventType, ...data })
-  }).catch((error) => {
-    console.warn(`[event-bus] Falha ao publicar ${eventType}:`, error.message);
-  });
+  pendingEvents.push({ eventType, ...data });
+  flushPendingEvents();
 }
+
+async function flushPendingEvents() {
+  if (sendingEvents) return;
+  sendingEvents = true;
+  try {
+    while (pendingEvents.length > 0) {
+      const response = await fetch(`${EVENT_BUS_URL}/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pendingEvents[0])
+      });
+      if (response.status >= 400 && response.status < 500) {
+        // Evento recusado pelo barramento: tentar de novo nao adianta.
+        console.warn(`[event-bus] Evento ${pendingEvents[0].eventType} recusado (HTTP ${response.status}).`);
+      } else if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      pendingEvents.shift();
+    }
+  } catch (error) {
+    console.warn(
+      `[event-bus] Barramento indisponivel (${error.message}); ${pendingEvents.length} evento(s) aguardando na fila.`
+    );
+  } finally {
+    sendingEvents = false;
+  }
+}
+
+setInterval(flushPendingEvents, 3000);
 
 app.use(cors());
 app.use(express.json());
@@ -75,38 +107,68 @@ function normalizeInput(payload) {
   return normalized;
 }
 
+// Copia local dos dados de mercado necessarios para o WACC, recebida pelos
+// eventos do barramento. Assim este servico nao depende do ms-dados-mercado
+// estar no ar para salvar premissas.
+const WACC_INPUT_FIELDS = [
+  'currentStockPrice',
+  'sharesOutstanding',
+  'beta',
+  'totalDebt',
+  'costOfDebt',
+  'effectiveTaxRate'
+];
+let marketDataByCompany = {};
+
+const CONSUMED_EVENT_TYPES = ['MARKET_DATA_UPSERTED', 'MARKET_DATA_DELETED', 'COMPANY_DELETED'];
+
+function applyEvent(event) {
+  const eventType = String(event?.eventType || '').trim().toUpperCase();
+
+  if (eventType === 'MARKET_DATA_UPSERTED') {
+    const companyIdResult = parseCompanyId(event.payload?.companyId);
+    if (companyIdResult.error) return { error: companyIdResult.error };
+
+    const waccInputs = { companyId: companyIdResult.value };
+    for (const field of WACC_INPUT_FIELDS) {
+      const parsed = parseNumericField(event.payload?.[field], field);
+      if (parsed.error) return { error: parsed.error };
+      waccInputs[field] = parsed.value;
+    }
+    marketDataByCompany[companyIdResult.value] = waccInputs;
+    return { value: { eventType, companyId: companyIdResult.value } };
+  }
+
+  if (eventType === 'MARKET_DATA_DELETED' || eventType === 'COMPANY_DELETED') {
+    const companyIdResult = parseCompanyId(event.companyId);
+    if (companyIdResult.error) return { error: companyIdResult.error };
+    delete marketDataByCompany[companyIdResult.value];
+    if (eventType === 'COMPANY_DELETED') {
+      delete assumptionsByCompany[companyIdResult.value];
+    }
+    return { value: { eventType, companyId: companyIdResult.value } };
+  }
+
+  return { value: { eventType, ignorado: true } };
+}
+
+const assinatura = criarAssinatura({
+  nome: 'premissas-projecao',
+  eventBusUrl: EVENT_BUS_URL,
+  urlDeEventos: EVENTS_URL,
+  tipos: CONSUMED_EVENT_TYPES,
+  aplicar: applyEvent
+});
+
 async function fetchMarketData(companyId) {
-  try {
-    const response = await fetch(`${MARKET_DATA_URL}/market-data/${companyId}/wacc-inputs`);
-
-    if (response.ok) {
-      return { value: await response.json() };
-    }
-
-    if (response.status === 404) {
-      return {
-        error: 'Cadastre os dados de mercado desta empresa antes de salvar premissas.',
-        status: 422
-      };
-    }
-
-    let message = `Falha ao consultar dados de mercado para a empresa ${companyId}.`;
-
-    try {
-      const body = await response.json();
-      if (body?.message) {
-        message = body.message;
-      }
-    } catch {
-    }
-
-    return { error: message, status: response.status };
-  } catch {
+  const marketData = marketDataByCompany[companyId];
+  if (!marketData) {
     return {
-      error: 'O serviço de dados de mercado está inacessível. Verifique se ele está ativo na porta 3002.',
-      status: 503
+      error: 'Cadastre os dados de mercado desta empresa antes de salvar premissas.',
+      status: 422
     };
   }
+  return { value: marketData };
 }
 
 function calculateWaccFromCapm(marketData, riskFreeRate, marketRiskPremium) {
@@ -400,6 +462,17 @@ app.delete('/premissas/:companyId', (req, res) => {
   publishEvent('ASSUMPTIONS_DELETED', { companyId });
 });
 
+app.post('/events', (req, res) => {
+  const events = Array.isArray(req.body) ? req.body : [req.body];
+  const results = events.map((event) => assinatura.receber(event));
+  const failed = results.find((result) => result?.error);
+  if (failed) {
+    return res.status(400).json({ message: failed.error });
+  }
+  return res.status(202).json({ message: 'Eventos processados.', results });
+});
+
 app.listen(PORT, () => {
   console.log(`Microsservico Premissas de Projecao ativo na porta ${PORT}`);
+  assinatura.iniciar();
 });

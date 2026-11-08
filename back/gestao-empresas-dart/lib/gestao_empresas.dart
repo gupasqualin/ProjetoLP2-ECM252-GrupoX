@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -32,22 +34,73 @@ class Empresa {
       };
 }
 
-/// Cria um publicador que faz `POST /publish` no barramento de eventos.
-/// Falhas são só registradas no log, para não derrubar a requisição.
-PublicadorEventos publicadorHttp(String eventBusUrl) {
-  return (eventType, dados) {
-    http
-        .post(
-      Uri.parse('$eventBusUrl/publish'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'eventType': eventType, ...dados}),
-    )
-        .catchError((Object erro) {
-      print('[event-bus] Falha ao publicar $eventType: $erro');
-      return http.Response('', 500);
-    });
-  };
+/// Fila de saída de eventos para o barramento.
+///
+/// Se o barramento estiver fora do ar, os eventos esperam na fila e são
+/// enviados, na ordem em que aconteceram, quando ele voltar. Assim nenhuma
+/// alteração se perde e a requisição do usuário nunca falha por causa dele.
+class FilaDeEventos {
+  FilaDeEventos(
+    this.eventBusUrl, {
+    http.Client? cliente,
+    Duration intervalo = const Duration(seconds: 3),
+  }) : _cliente = cliente ?? http.Client() {
+    _timer = Timer.periodic(intervalo, (_) => enviarPendentes());
+  }
+
+  final String eventBusUrl;
+  final http.Client _cliente;
+  final _pendentes = Queue<Map<String, Object?>>();
+  late final Timer _timer;
+  Future<void>? _envioEmAndamento;
+
+  int get pendentes => _pendentes.length;
+
+  /// Use como `publicarEvento` em [criarApp].
+  void publicar(String eventType, Map<String, Object?> dados) {
+    _pendentes.add({'eventType': eventType, ...dados});
+    enviarPendentes();
+  }
+
+  /// Envia os eventos da fila. Se já houver um envio em andamento, espera
+  /// por ele em vez de começar outro (os eventos saem um de cada vez).
+  Future<void> enviarPendentes() =>
+      _envioEmAndamento ??= _enviar().whenComplete(() {
+        _envioEmAndamento = null;
+      });
+
+  Future<void> _enviar() async {
+    try {
+      while (_pendentes.isNotEmpty) {
+        final resposta = await _cliente.post(
+          Uri.parse('$eventBusUrl/publish'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(_pendentes.first),
+        );
+        if (resposta.statusCode >= 400 && resposta.statusCode < 500) {
+          // Evento recusado pelo barramento: tentar de novo não adianta.
+          print('[event-bus] Evento ${_pendentes.first['eventType']} '
+              'recusado (HTTP ${resposta.statusCode}).');
+        } else if (resposta.statusCode >= 500) {
+          throw http.ClientException('HTTP ${resposta.statusCode}');
+        }
+        _pendentes.removeFirst();
+      }
+    } on Exception catch (erro) {
+      print('[event-bus] Barramento indisponível ($erro); '
+          '${_pendentes.length} evento(s) aguardando na fila.');
+    }
+  }
+
+  void fechar() {
+    _timer.cancel();
+    _cliente.close();
+  }
 }
+
+/// Cria um publicador que envia os eventos ao barramento pela [FilaDeEventos].
+PublicadorEventos publicadorHttp(String eventBusUrl) =>
+    FilaDeEventos(eventBusUrl).publicar;
 
 /// Monta o handler HTTP do microsserviço de Gestão de Empresas.
 Handler criarApp({required PublicadorEventos publicarEvento}) {

@@ -12,7 +12,6 @@ services:
     command: ["node", "barramento-eventos/src/server_barramento-eventos.js"]
     environment:
       PORT: 3006
-      VALUATION_ENGINE_EVENTS_URL: ${VALUATION_ENGINE_EVENTS_URL}
     ports:
       - "${BARRAMENTO_EVENTOS_PORT}:3006"
     networks:
@@ -54,7 +53,7 @@ services:
     environment:
       PORT: 3003
       EVENT_BUS_URL: ${EVENT_BUS_URL}
-      MARKET_DATA_URL: ${MARKET_DATA_URL}
+      EVENTS_URL: http://premissas-projecao:3003/events
       DEFAULT_RISK_FREE_RATE: ${DEFAULT_RISK_FREE_RATE}
       DEFAULT_MARKET_RISK_PREMIUM: ${DEFAULT_MARKET_RISK_PREMIUM}
     ports:
@@ -69,9 +68,8 @@ services:
     command: ["node", "valuation/src/server_valuation.js"]
     environment:
       PORT: 3004
-      COMPANY_SERVICE_URL: ${COMPANY_SERVICE_URL}
-      MARKET_DATA_SERVICE_URL: ${MARKET_DATA_SERVICE_URL}
-      ASSUMPTIONS_SERVICE_URL: ${ASSUMPTIONS_SERVICE_URL}
+      EVENT_BUS_URL: ${EVENT_BUS_URL}
+      EVENTS_URL: http://valuation:3004/events
       DEFAULT_RISK_FREE_RATE: ${DEFAULT_RISK_FREE_RATE}
       DEFAULT_MARKET_RISK_PREMIUM: ${DEFAULT_MARKET_RISK_PREMIUM}
     ports:
@@ -86,7 +84,8 @@ services:
     command: ["node", "análise-sensibilidade/src/server_sensitivity-matrix.js"]
     environment:
       PORT: 3005
-      VALUATION_ENGINE_URL: ${VALUATION_ENGINE_URL}
+      EVENT_BUS_URL: ${EVENT_BUS_URL}
+      EVENTS_URL: http://analise-sensibilidade:3005/events
     ports:
       - "${ANALISE_SENSIBILIDADE_PORT}:3005"
     networks:
