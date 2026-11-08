@@ -1,0 +1,7 @@
+# Android Studio / IntelliJ
+.idea/
+
+# Arquivos gerados pelo Flutter para desktop (o app é mobile)
+front_mobile/linux/flutter/generated_plugin*
+front_mobile/macos/Flutter/GeneratedPluginRegistrant.swift
+front_mobile/windows/flutter/generated_plugin*
