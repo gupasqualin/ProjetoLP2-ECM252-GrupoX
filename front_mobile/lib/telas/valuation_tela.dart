@@ -24,6 +24,7 @@ class ValuationTela extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListaEmpresasStatus(
       titulo: 'Valuation',
+      somenteLeitura: true,
       carregar: _carregar,
       textoSemDados: 'Ainda não calculado — toque para calcular',
       resumo: (v) {

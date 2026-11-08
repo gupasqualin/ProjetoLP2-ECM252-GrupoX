@@ -24,6 +24,7 @@ class SensibilidadeTela extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListaEmpresasStatus(
       titulo: 'Sensibilidade',
+      somenteLeitura: true,
       carregar: _carregar,
       textoSemDados: 'Toque para gerar os cenários',
       resumo: (v) =>

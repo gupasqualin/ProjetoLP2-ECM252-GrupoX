@@ -11,9 +11,8 @@ typedef EmpresasComDados = ({
 
 /// Lista as empresas mostrando se cada uma já tem dados cadastrados.
 ///
-/// Usada pelas telas de Dados de Mercado e de Premissas: ao tocar numa
-/// empresa, [aoAbrir] abre o formulário; se ele devolver `true`, a lista
-/// é recarregada.
+/// Ao tocar numa empresa, [aoAbrir] abre a próxima tela (formulário ou
+/// resultado); se ela devolver `true`, a lista é recarregada.
 class ListaEmpresasStatus extends StatefulWidget {
   const ListaEmpresasStatus({
     super.key,
@@ -22,9 +21,14 @@ class ListaEmpresasStatus extends StatefulWidget {
     required this.resumo,
     required this.textoSemDados,
     required this.aoAbrir,
+    this.somenteLeitura = false,
   });
 
   final String titulo;
+
+  /// true nas telas de resultado (Valuation e Cenários): mostra uma seta
+  /// em vez dos ícones de editar/adicionar dos formulários.
+  final bool somenteLeitura;
   final Future<EmpresasComDados> Function() carregar;
 
   /// Texto curto mostrado quando a empresa já tem dados.
@@ -98,6 +102,7 @@ class _ListaEmpresasStatusState extends State<ListaEmpresasStatus> {
                       ? null
                       : widget.resumo(dadosEmpresa),
                   textoSemDados: widget.textoSemDados,
+                  somenteLeitura: widget.somenteLeitura,
                   aoTocar: () => _abrir(empresa, dadosEmpresa),
                 );
               },
@@ -114,12 +119,14 @@ class _ItemEmpresa extends StatelessWidget {
     required this.empresa,
     required this.resumo,
     required this.textoSemDados,
+    required this.somenteLeitura,
     required this.aoTocar,
   });
 
   final Empresa empresa;
   final String? resumo;
   final String textoSemDados;
+  final bool somenteLeitura;
   final VoidCallback aoTocar;
 
   @override
@@ -135,7 +142,11 @@ class _ItemEmpresa extends StatelessWidget {
         ),
         title: Text(empresa.rotulo),
         subtitle: Text(resumo ?? textoSemDados),
-        trailing: Icon(temDados ? Icons.edit_outlined : Icons.add),
+        trailing: Icon(
+          somenteLeitura
+              ? Icons.chevron_right
+              : (temDados ? Icons.edit_outlined : Icons.add),
+        ),
       ),
     );
   }
