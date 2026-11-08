@@ -4,6 +4,8 @@ import 'servicos/decision_api.dart';
 import 'telas/dados_mercado_tela.dart';
 import 'telas/empresas_tela.dart';
 import 'telas/premissas_tela.dart';
+import 'telas/sensibilidade_tela.dart';
+import 'telas/valuation_tela.dart';
 
 void main() {
   runApp(DecisionDcfApp(api: DecisionApi()));
@@ -72,6 +74,18 @@ class _InicioTelaState extends State<InicioTela> {
         Icons.tune_outlined,
         Icons.tune,
         () => PremissasTela(api: api),
+      ),
+      (
+        'Valuation',
+        Icons.calculate_outlined,
+        Icons.calculate,
+        () => ValuationTela(api: api),
+      ),
+      (
+        'Cenários',
+        Icons.grid_view_outlined,
+        Icons.grid_view,
+        () => SensibilidadeTela(api: api),
       ),
     ];
 

@@ -70,6 +70,22 @@ Future<void> _salvar(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('formulários cabem na tela de um celular', (tester) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final back = _BackFalso();
+
+    for (final tela in [
+      FormularioDadosMercado(api: back.api, empresa: _petrobras),
+      FormularioPremissas(api: back.api, empresa: _petrobras),
+    ]) {
+      await tester.pumpWidget(MaterialApp(home: tela));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: '$tela');
+    }
+  });
+
   group('Formulário de dados de mercado', () {
     const valores = {
       'Preço atual da ação': '38,50',

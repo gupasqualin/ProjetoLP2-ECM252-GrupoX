@@ -90,6 +90,29 @@ class DecisionApi {
   Future<void> removerPremissas(int companyId) =>
       _cliente.delete(ApiConfig.premissas('/premissas/$companyId'));
 
+  // ---------- Valuation (porta 3004) ----------
+
+  /// Valuations já calculados, indexados pelo id da empresa.
+  Future<Map<int, Map<String, dynamic>>> listarValuations() async =>
+      _porEmpresa(await _cliente.get(ApiConfig.valuation('/valuations')));
+
+  /// Busca os dados atuais nos outros microsserviços e recalcula o valuation.
+  Future<Map<String, dynamic>> calcularValuation(int companyId) async {
+    final resposta = await _cliente.post(
+      ApiConfig.valuation('/valuation/$companyId/sync-from-services'),
+    );
+    return (resposta as Map<String, dynamic>)['valuation']
+        as Map<String, dynamic>;
+  }
+
+  // ---------- Análise de Sensibilidade (porta 3005) ----------
+
+  /// Gera as matrizes de preço justo variando WACC, crescimento e margem.
+  Future<Map<String, dynamic>> gerarSensibilidade(int companyId) async =>
+      await _cliente.post(
+        ApiConfig.sensibilidade('/sensitivity/$companyId/matrices'),
+      ) as Map<String, dynamic>;
+
   Map<int, Map<String, dynamic>> _porEmpresa(dynamic lista) => {
     for (final item in (lista as List).cast<Map<String, dynamic>>())
       (item['companyId'] as num).toInt(): item,
