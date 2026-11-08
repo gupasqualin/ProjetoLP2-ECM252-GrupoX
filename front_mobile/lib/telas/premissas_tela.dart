@@ -13,13 +13,8 @@ class PremissasTela extends StatelessWidget {
 
   final DecisionApi api;
 
-  Future<EmpresasComDados> _carregar() async {
-    final (empresas, dados) = await (
-      api.listarEmpresas(),
-      api.listarPremissas(),
-    ).wait;
-    return (empresas: empresas, dados: dados);
-  }
+  Future<EmpresasComDados> _carregar() =>
+      buscarEmpresasComDados(api.listarEmpresas(), api.listarPremissas());
 
   @override
   Widget build(BuildContext context) {

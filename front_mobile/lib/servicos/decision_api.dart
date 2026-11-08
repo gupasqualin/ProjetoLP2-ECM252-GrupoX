@@ -61,6 +61,9 @@ class DecisionApi {
     return resposta as Map<String, dynamic>;
   }
 
+  Future<bool> temDadosMercado(int companyId) =>
+      _existe(ApiConfig.dadosMercado('/market-data/$companyId'));
+
   Future<void> removerDadosMercado(int companyId) =>
       _cliente.delete(ApiConfig.dadosMercado('/market-data/$companyId'));
 
@@ -87,6 +90,9 @@ class DecisionApi {
     return resposta as Map<String, dynamic>;
   }
 
+  Future<bool> temPremissas(int companyId) =>
+      _existe(ApiConfig.premissas('/premissas/$companyId'));
+
   Future<void> removerPremissas(int companyId) =>
       _cliente.delete(ApiConfig.premissas('/premissas/$companyId'));
 
@@ -112,6 +118,17 @@ class DecisionApi {
       await _cliente.post(
         ApiConfig.sensibilidade('/sensitivity/$companyId/matrices'),
       ) as Map<String, dynamic>;
+
+  /// true se o recurso existe; false se o back-end responder 404.
+  Future<bool> _existe(Uri uri) async {
+    try {
+      await _cliente.get(uri);
+      return true;
+    } on ApiException catch (e) {
+      if (e.status == 404) return false;
+      rethrow;
+    }
+  }
 
   Map<int, Map<String, dynamic>> _porEmpresa(dynamic lista) => {
     for (final item in (lista as List).cast<Map<String, dynamic>>())

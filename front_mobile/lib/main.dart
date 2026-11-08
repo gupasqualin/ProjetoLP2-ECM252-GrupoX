@@ -89,18 +89,31 @@ class _InicioTelaState extends State<InicioTela> {
       ),
     ];
 
-    return Scaffold(
-      body: KeyedSubtree(key: ValueKey(_aba), child: abas[_aba].$4()),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _aba,
-        onDestinationSelected: (aba) => setState(() => _aba = aba),
-        destinations: [
-          for (final (rotulo, icone, iconeSelecionado, _) in abas)
-            NavigationDestination(
-              icon: Icon(icone),
-              selectedIcon: Icon(iconeSelecionado),
-              label: rotulo,
+    // Column (e não um Scaffold por fora): assim o Scaffold de cada aba é o
+    // principal e os avisos (SnackBar) aparecem nele, empurrando o botão
+    // flutuante para cima em vez de ficar por cima dele.
+    return Material(
+      child: Column(
+        children: [
+          Expanded(
+            child: MediaQuery.removePadding(
+              context: context,
+              removeBottom: true,
+              child: KeyedSubtree(key: ValueKey(_aba), child: abas[_aba].$4()),
             ),
+          ),
+          NavigationBar(
+            selectedIndex: _aba,
+            onDestinationSelected: (aba) => setState(() => _aba = aba),
+            destinations: [
+              for (final (rotulo, icone, iconeSelecionado, _) in abas)
+                NavigationDestination(
+                  icon: Icon(icone),
+                  selectedIcon: Icon(iconeSelecionado),
+                  label: rotulo,
+                ),
+            ],
+          ),
         ],
       ),
     );

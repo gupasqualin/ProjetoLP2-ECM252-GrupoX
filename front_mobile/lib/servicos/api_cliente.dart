@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../util/mensagens.dart';
+
 /// Erro de comunicação com o back-end, já com uma mensagem para o usuário.
 class ApiException implements Exception {
   final String mensagem;
@@ -19,7 +21,7 @@ class ApiCliente {
   ApiCliente({http.Client? cliente}) : _http = cliente ?? http.Client();
 
   final http.Client _http;
-  static const _tempoLimite = Duration(seconds: 15);
+  static const _tempoLimite = Duration(seconds: 10);
   static const _cabecalhos = {'Content-Type': 'application/json'};
 
   Future<dynamic> get(Uri uri) => _enviar(uri, () => _http.get(uri));
@@ -60,7 +62,7 @@ class ApiCliente {
     }
 
     final mensagem = corpo is Map && corpo['message'] is String
-        ? corpo['message'] as String
+        ? traduzirMensagem(corpo['message'] as String)
         : 'Erro ${resposta.statusCode} ao acessar o servidor.';
     throw ApiException(mensagem, status: resposta.statusCode);
   }

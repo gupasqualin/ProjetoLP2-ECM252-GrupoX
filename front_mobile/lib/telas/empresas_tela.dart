@@ -64,11 +64,31 @@ class _EmpresasTelaState extends State<EmpresasTela> {
 
   Future<void> _recalcular(Empresa empresa) async {
     try {
+      // O recálculo é feito pelo barramento de eventos e não devolve erro;
+      // por isso o app confere antes se a empresa tem tudo o que precisa.
+      final temMercado = await widget.api.temDadosMercado(empresa.id);
+      final temPremissas = await widget.api.temPremissas(empresa.id);
+      final faltando = [
+        if (!temMercado) 'os dados de mercado',
+        if (!temPremissas) 'as premissas',
+      ];
+      if (!mounted) return;
+      if (faltando.isNotEmpty) {
+        mostrarAviso(
+          context,
+          'Para calcular o valuation de ${empresa.ticker}, '
+          'cadastre antes ${faltando.join(' e ')}.',
+          erro: true,
+        );
+        return;
+      }
+
       await widget.api.solicitarRecalculo(empresa.id);
       if (mounted) {
         mostrarAviso(
           context,
-          'Recálculo do valuation de ${empresa.ticker} solicitado.',
+          'Recálculo de ${empresa.ticker} solicitado. '
+          'Veja o resultado na aba Valuation.',
         );
       }
     } on Exception catch (e) {

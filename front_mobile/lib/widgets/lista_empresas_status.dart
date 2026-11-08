@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../modelos/empresa.dart';
@@ -11,6 +13,22 @@ typedef EmpresasComDados = ({
 
 /// Lista as empresas mostrando se cada uma já tem dados cadastrados.
 ///
+/// Busca as empresas e os [dados] ao mesmo tempo. Se algo falhar, lança o
+/// erro original (e não o `ParallelWaitError` do Dart, que apareceria como
+/// texto técnico na tela).
+Future<EmpresasComDados> buscarEmpresasComDados(
+  Future<List<Empresa>> empresas,
+  Future<Map<int, Map<String, dynamic>>> dados,
+) async {
+  try {
+    final (listaEmpresas, mapaDados) = await (empresas, dados).wait;
+    return (empresas: listaEmpresas, dados: mapaDados);
+  } on ParallelWaitError catch (erro) {
+    final (erroEmpresas, erroDados) = erro.errors as (AsyncError?, AsyncError?);
+    throw (erroEmpresas ?? erroDados)!.error;
+  }
+}
+
 /// Ao tocar numa empresa, [aoAbrir] abre a próxima tela (formulário ou
 /// resultado); se ela devolver `true`, a lista é recarregada.
 class ListaEmpresasStatus extends StatefulWidget {

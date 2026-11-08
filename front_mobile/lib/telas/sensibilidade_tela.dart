@@ -12,18 +12,13 @@ class SensibilidadeTela extends StatelessWidget {
 
   final DecisionApi api;
 
-  Future<EmpresasComDados> _carregar() async {
-    final (empresas, dados) = await (
-      api.listarEmpresas(),
-      api.listarValuations(),
-    ).wait;
-    return (empresas: empresas, dados: dados);
-  }
+  Future<EmpresasComDados> _carregar() =>
+      buscarEmpresasComDados(api.listarEmpresas(), api.listarValuations());
 
   @override
   Widget build(BuildContext context) {
     return ListaEmpresasStatus(
-      titulo: 'Sensibilidade',
+      titulo: 'Cenários',
       somenteLeitura: true,
       carregar: _carregar,
       textoSemDados: 'Toque para gerar os cenários',
@@ -122,6 +117,20 @@ class _DetalheSensibilidadeState extends State<DetalheSensibilidade> {
                 'Como o preço justo muda se as premissas variarem. '
                 'O cenário base é ${formatarMoeda(base)} (centro da tabela).',
               ),
+              if ((analise['baseAssumptions']
+                      as Map?)?['terminalValueMethod'] ==
+                  'EXIT_MULTIPLE') ...[
+                const SizedBox(height: 12),
+                const Card(
+                  child: ListTile(
+                    leading: Icon(Icons.info_outline),
+                    title: Text(
+                      'Esta empresa usa múltiplo de saída no valor terminal, '
+                      'então o crescimento perpétuo não altera o preço justo.',
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
