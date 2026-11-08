@@ -38,7 +38,9 @@ No segundo semestre, o DecisionDCF ganhou um **app mobile em Flutter**: toda a a
 
 ## Arquitetura
 
-O back-end é formado por microsserviços que conversam por um barramento de eventos. Os front-ends acessam os microsserviços por requisições HTTP.
+O back-end é formado por microsserviços que conversam **somente** por um barramento de eventos. Os front-ends acessam os microsserviços por requisições HTTP.
+
+**Nenhum microsserviço chama outro diretamente.** Quem precisa de dados de outro serviço (por exemplo, o valuation precisa dos dados de mercado e das premissas) guarda uma cópia local, recebida pelos eventos. Ao subir, cada serviço recupera no barramento os eventos que perdeu enquanto estava fora do ar. Por isso, se qualquer microsserviço cair, inclusive o barramento, os outros continuam funcionando.
 
 | Microsserviço | Pasta | Porta | Linguagem |
 |---|---|---|---|
