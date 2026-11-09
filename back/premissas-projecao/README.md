@@ -45,6 +45,8 @@ Para calcular o WACC sem depender do ms-dados-mercado, o serviço guarda uma có
 
 Ao subir, o serviço se registra no barramento e recupera os eventos que perdeu; a cada 10 segundos ele repete isso.
 
+Quando chegam dados de mercado novos de uma empresa que já tem premissas (por exemplo, o preço da ação ou a dívida mudaram), o serviço **recalcula o WACC sozinho** e publica as premissas atualizadas (`ASSUMPTIONS_UPSERTED`). Assim o valuation e a análise de sensibilidade nunca ficam com um WACC antigo.
+
 Variáveis de ambiente: `EVENT_BUS_URL` (barramento) e `EVENTS_URL` (endereço em que o barramento entrega os eventos para este serviço).
 
 

@@ -136,7 +136,8 @@ function applyEvent(event) {
       waccInputs[field] = parsed.value;
     }
     marketDataByCompany[companyIdResult.value] = waccInputs;
-    return { value: { eventType, companyId: companyIdResult.value } };
+    const recalculated = refreshDiscountRate(companyIdResult.value);
+    return { value: { eventType, companyId: companyIdResult.value, waccRecalculado: recalculated } };
   }
 
   if (eventType === 'MARKET_DATA_DELETED' || eventType === 'COMPANY_DELETED') {
@@ -150,6 +151,36 @@ function applyEvent(event) {
   }
 
   return { value: { eventType, ignorado: true } };
+}
+
+// O WACC depende dos dados de mercado (preco, acoes, divida, beta...). Quando
+// eles mudam, recalcula o WACC das premissas ja salvas e avisa os outros
+// microsservicos pelo barramento, para o valuation nao usar um WACC antigo.
+function refreshDiscountRate(companyId) {
+  const assumptions = assumptionsByCompany[companyId];
+  if (!assumptions) return false;
+
+  const waccResult = calculateWaccFromCapm(
+    marketDataByCompany[companyId],
+    assumptions.riskFreeRate,
+    assumptions.marketRiskPremium
+  );
+  if (waccResult.error) {
+    console.warn(`[premissas-projecao] WACC da empresa ${companyId} nao recalculado: ${waccResult.error}`);
+    return false;
+  }
+  if (waccResult.value.discountRate === assumptions.discountRate) return false;
+
+  const updated = { ...assumptions, ...waccResult.value, discountRate: waccResult.value.discountRate };
+  assumptionsByCompany[companyId] = updated;
+  publishEvent('ASSUMPTIONS_UPSERTED', { payload: updated });
+
+  if (updated.terminalValueMethod === 'GORDON' && updated.perpetualGrowthRate >= updated.discountRate) {
+    console.warn(
+      `[premissas-projecao] Empresa ${companyId}: o crescimento na perpetuidade ficou maior ou igual ao novo WACC.`
+    );
+  }
+  return true;
 }
 
 const assinatura = criarAssinatura({
