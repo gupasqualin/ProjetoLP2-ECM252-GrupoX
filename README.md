@@ -70,7 +70,7 @@ O script constrói as imagens, sobe os 6 microsserviços e espera todos responde
 
 ### Back-end com Kubernetes
 
-Dentro da pasta `back`, com um cluster Kubernetes ativo (por exemplo, o do Docker Desktop):
+Dentro da pasta `back`, com um cluster Kubernetes ativo:
 
 ```bash
 docker compose build
@@ -78,6 +78,21 @@ docker compose build
 ```
 
 Também existem `./kubernetes/up.sh status` (mostra os pods) e `./kubernetes/up.sh down` (remove tudo). Os serviços ficam expostos nas portas 30001 a 30006.
+
+> **Kubernetes do Docker Desktop: use o modo kubeadm.** Em Settings → Kubernetes → *Choose cluster provisioning method*, escolha **kubeadm**. No modo **kind**, o cluster guarda uma cópia própria das imagens e não enxerga as que o `docker compose build` acabou de gerar (os pods rodam código antigo), e as portas 30001 a 30006 não ficam acessíveis no `localhost`.
+>
+> Depois de reconstruir as imagens com o cluster já no ar, rode `kubectl rollout restart deployment -n valuation` para os pods passarem a usar as imagens novas.
+
+### Dados de exemplo
+
+Com o back-end rodando, dentro da pasta `back`:
+
+```bash
+./scripts/dados-exemplo.sh          # Docker Compose
+./scripts/dados-exemplo.sh 30000    # Kubernetes
+```
+
+Cadastra Petrobras, Vale, WEG e Magazine Luiza com dados de mercado e premissas aproximados (valores em milhões), prontos para ver no app. Os dados ficam em memória: se os serviços reiniciarem, rode o script de novo.
 
 ### App mobile (Flutter)
 
