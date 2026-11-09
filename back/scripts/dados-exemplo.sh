@@ -54,10 +54,18 @@ cadastrar() {
     return 1
   fi
 
-  local s_mercado s_premissas
+  local s_mercado s_premissas tentativa
   s_mercado=$(salvar "$MERCADO/market-data" "$MERCADO/market-data/$id" "{\"companyId\":$id,$mercado}")
-  sleep 1 # tempo do evento de dados de mercado chegar no servico de premissas
-  s_premissas=$(salvar "$PREMISSAS/premissas" "$PREMISSAS/premissas/$id" "{\"companyId\":$id,$premissas}")
+
+  # O servico de premissas recebe os dados de mercado por um evento. Logo
+  # depois de o back-end subir, ele pode levar ate ~10 s para se registrar no
+  # barramento; enquanto isso, responde 422 e tentamos de novo.
+  for tentativa in 1 2 3 4 5 6 7 8; do
+    sleep 1
+    s_premissas=$(salvar "$PREMISSAS/premissas" "$PREMISSAS/premissas/$id" "{\"companyId\":$id,$premissas}")
+    [ "$s_premissas" != 422 ] && break
+    sleep 1
+  done
   sleep 1
   curl -s -o /dev/null -X POST "$VALUATION/valuation/$id/recalculate"
 
