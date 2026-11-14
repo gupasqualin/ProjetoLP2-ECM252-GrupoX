@@ -2,6 +2,8 @@
 
 **Quanto vale uma empresa? Descubra em minutos, sem planilha.**
 
+**LINK VÍDEO APRESENTÇÃO:** https://www.youtube.com/watch?v=9xUne2HQy-E
+
 ## Sobre o projeto
 
 Quem já tentou calcular o valor de uma empresa na mão sabe como é: uma planilha enorme, fórmulas ligadas umas às outras e o risco de um erro numa célula estragar tudo no final. O DecisionDCF existe para tirar esse trabalho do caminho.
